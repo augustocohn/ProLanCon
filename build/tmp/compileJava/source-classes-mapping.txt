@@ -20,13 +20,13 @@ plc/project/Ast.java
  plc.project.Ast$Stmt$If
  plc.project.Ast$Stmt$Return
  plc.project.Ast$Stmt$While
+plc/project/ParseException.java
+ plc.project.ParseException
 plc/project/Token.java
  plc.project.Token
  plc.project.Token$Type
 plc/homework/Regex.java
  plc.homework.Regex
-plc/project/ParseException.java
- plc.project.ParseException
 plc/project/Parser.java
  plc.project.Parser
  plc.project.Parser$1
