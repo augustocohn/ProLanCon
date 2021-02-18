@@ -1,5 +1,7 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -151,8 +153,19 @@ public final class Parser {
      * functions. It may be helpful to break these up into other methods but is
      * not strictly necessary.
      */
-    public Ast.Expr parsePrimaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+    public Ast.Expr parsePrimaryExpression()   {
+        if(match(Token.Type.INTEGER)){
+            return new Ast.Expr.Literal(new BigInteger(tokens.get(0).getLiteral()));
+        }
+        if(match(Token.Type.DECIMAL)){
+            return new Ast.Expr.Literal(new BigDecimal(tokens.get(0).getLiteral()));
+        }
+        if(match(Token.Type.CHARACTER)){
+            String temp = tokens.get(0).getLiteral();
+            temp = temp.substring(0,1);
+            temp = temp.substring(1,2);
+        }
+
     }
 
     /**
