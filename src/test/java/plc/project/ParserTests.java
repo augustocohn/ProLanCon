@@ -287,11 +287,15 @@ final class ParserTests {
                         Arrays.asList(new Token(Token.Type.CHARACTER, "'c'", 0)),
                         new Ast.Expr.Literal('c')
                 ),
+                Arguments.of("Character Escape",
+                        Arrays.asList(new Token(Token.Type.CHARACTER, "'\\n'", 0)),
+                        new Ast.Expr.Literal('\n')
+                ),
                 Arguments.of("String Literal",
                         Arrays.asList(new Token(Token.Type.STRING, "\"string\"", 0)),
                         new Ast.Expr.Literal("string")
                 ),
-                Arguments.of("Escape Character",
+                Arguments.of("String Escape Character",
                         Arrays.asList(new Token(Token.Type.STRING, "\"Hello,\\nWorld!\"", 0)),
                         new Ast.Expr.Literal("Hello,\nWorld!")
                 )
