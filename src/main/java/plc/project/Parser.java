@@ -166,19 +166,19 @@ public final class Parser {
         if(peek(Token.Type.CHARACTER)){
             String temp = tokens.get(0).getLiteral();
             temp = temp.substring(1, temp.length() - 1);
-            temp = temp.replaceAll("\\\\\\\\","\\\\");
+            //temp = temp.replace("\\\\\\\\","\\\\");
             char c;
             switch (temp){
-                case "\b":
+                case "\\b":
                     c = '\b';
                     break;
-                case "\n":
+                case "\\n":
                     c = '\n';
                     break;
-                case "\r":
+                case "\\r":
                     c = '\r';
                     break;
-                case "\t":
+                case "\\t":
                     c = '\t';
                     break;
                 case "\'":
@@ -193,7 +193,6 @@ public final class Parser {
                 default:
                     c = temp.charAt(0);
             }
-            System.out.println(c);
             return new Ast.Expr.Literal(new Character(c));
         }
         if(peek(Token.Type.STRING)){
