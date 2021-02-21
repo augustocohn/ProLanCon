@@ -198,7 +198,14 @@ public final class Parser {
         if(peek(Token.Type.STRING)){
             String temp = tokens.get(0).getLiteral();
             temp = temp.substring(1, temp.length() - 1);
-            temp = temp.replace("\\\\\\\\","\\");
+            temp = temp.replaceAll("\\\\b","\b");
+            temp = temp.replaceAll("\\\\n","\n");
+            temp = temp.replaceAll("\\\\r","\r");
+            temp = temp.replaceAll("\\\\t","\t");
+            temp = temp.replaceAll("\\\\'","\'");
+            temp = temp.replaceAll("\\\\\"","\"");
+            temp = temp.replaceAll("\\\\","\\");
+
             return new Ast.Expr.Literal(new String(temp));
         }
         if(peek(Token.Type.IDENTIFIER)){
