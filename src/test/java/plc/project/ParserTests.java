@@ -246,6 +246,8 @@ final class ParserTests {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource
     void testReturnStatement(String test, List<Token> tokens, Ast.Stmt.Return expected) {
         test(tokens, expected, Parser::parseStatement);
     }
