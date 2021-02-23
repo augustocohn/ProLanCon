@@ -32,7 +32,6 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException { //TODO
-        //throw new UnsupportedOperationException();
         List<Ast.Field> fields = new ArrayList<Ast.Field>();
         List<Ast.Method> methods = new ArrayList<Ast.Method>();
 
@@ -63,8 +62,10 @@ public final class Parser {
                 if(match(";")){                             //Handles just instantiation
                     return new Ast.Field(name, Optional.empty());
                 }
+
                 if(match("=")){
                     Ast.Expr expression = parseExpression();
+
                     if(match(";")){
                         return new Ast.Field(name, Optional.of(expression));
                     }
@@ -93,9 +94,12 @@ public final class Parser {
                             if(match("END")){                                           //Handles 0 Do statements
                                 return new Ast.Method(name, parameters, statements);
                             }
-
-                            Ast.Stmt temp = parseStatement();              /**HOW TO HANDLE 0+?*/
-                            statements.add(temp);
+                            System.out.println("YAY");
+                            do {
+                                Ast.Stmt temp = parseStatement();
+                                statements.add(temp);
+                            }while(!peek("END"));
+                            System.out.println("NOOOO");
                             if(match("END")){
                                 return new Ast.Method(name, parameters, statements);
                             }
@@ -161,6 +165,7 @@ public final class Parser {
                 match("=");
                 Ast.Expr right = parseExpression();
                 if(match(";")){
+                    System.out.println(left + " ,  " + right);
                     return new Ast.Stmt.Assignment(left, right);                    //Left: Receiver;  Right: Value
                 }
             }
@@ -186,7 +191,8 @@ public final class Parser {
                 if (match(";")) {
                     return new Ast.Stmt.Declaration(name, Optional.of(right));
                 }
-            } else if (match(";")) {
+            }
+            else if (match(";")) {
                 return new Ast.Stmt.Declaration(name, Optional.empty());
             }
         }
@@ -205,17 +211,34 @@ public final class Parser {
             List<Ast.Stmt> elseStatements = new ArrayList<Ast.Stmt>();
 
             if (match("DO")) {
-                Ast.Stmt statement = parseStatement();                                        //WHAT HAPPENS W/ 0 STATEMENTS???
-                thenStatements.add(statement);
+
+                if (match("END")) {                                                 //No Do statement & Else statement
+                    return new Ast.Stmt.If(expression, thenStatements, elseStatements);
+                }
+
+                do {
+                    Ast.Stmt temp = parseStatement();
+                    thenStatements.add(temp);
+                } while (!peek("END"));
+
+
                 if (match("ELSE")) {
-                    statement = parseStatement();                                             //WHAT HAPPENS W/ 0 STATEMENTS???
-                    elseStatements.add(statement);
+                    if (match("END")) {                                             //No Else statement
+                        return new Ast.Stmt.If(expression, thenStatements, elseStatements);
+                    }
+
+                    do {
+                        Ast.Stmt temp = parseStatement();
+                        elseStatements.add(temp);
+                    }while(!peek("END"));
+
                     if (match("END")) {
                         return new Ast.Stmt.If(expression, thenStatements, elseStatements);
                     }
                 }
-                else if (match("END")) {
-                    return new Ast.Stmt.If(expression, thenStatements, elseStatements);       //No Else clause
+
+                if (match("END")) {
+                    return new Ast.Stmt.If(expression, thenStatements, elseStatements);
                 }
             }
 
@@ -263,8 +286,11 @@ public final class Parser {
                         return new Ast.Stmt.For(name, expression, stmtList);
                     }
                     else {                                                               //Handles 1+ Do statements
-                        Ast.Stmt statement = parseStatement();
-                        stmtList.add(statement);
+                        do {
+                            Ast.Stmt temp = parseStatement();
+                            stmtList.add(temp);
+                        }while(!peek("END"));
+
                         if (match("END")) {
                             return new Ast.Stmt.For(name, expression, stmtList);
                         }
@@ -291,8 +317,11 @@ public final class Parser {
                     return new Ast.Stmt.While(expression, stmtList);
                 }
                 else{                                                                    //Handles 1+ Do statements
-                    Ast.Stmt statement = parseStatement();
-                    stmtList.add(statement);
+                    do {
+                        Ast.Stmt temp = parseStatement();
+                        stmtList.add(temp);
+                    }while(!peek("END"));
+
                     if (match("END")) {
                         return new Ast.Stmt.While(expression, stmtList);
                     }
@@ -405,7 +434,6 @@ public final class Parser {
         *
         * */
         while (match(".")){
-            //return parsePrimaryExpression();
             String name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
 
@@ -422,7 +450,12 @@ public final class Parser {
                     expression = parseExpression();
                     arguments.add(expression);
                 }
-                return new Ast.Expr.Function(Optional.of(left), name, arguments);
+                if(match(")")) {
+                    return new Ast.Expr.Function(Optional.of(left), name, arguments);
+                }
+                else{
+                    throw new ParseException("No ) parenthesis", tokens.index);
+                }
             }
             else{
                 return new Ast.Expr.Access(Optional.of(left),name);
@@ -447,11 +480,15 @@ public final class Parser {
 
         /**Token Types**/
         if(peek(Token.Type.INTEGER)){
-            return new Ast.Expr.Literal(new BigInteger(tokens.get(0).getLiteral()));
+            String integer = tokens.get(0).getLiteral();
+            match(Token.Type.INTEGER);
+            return new Ast.Expr.Literal(new BigInteger(integer));
         }
 
         if(peek(Token.Type.DECIMAL)){
-            return new Ast.Expr.Literal(new BigDecimal(tokens.get(0).getLiteral()));
+            String decimal = tokens.get(0).getLiteral();
+            match(Token.Type.DECIMAL);
+            return new Ast.Expr.Literal(new BigDecimal(decimal));
         }
 
         if(peek(Token.Type.CHARACTER)){
@@ -483,6 +520,8 @@ public final class Parser {
                 default:
                     c = temp.charAt(0);
             }
+
+            match(Token.Type.CHARACTER);
             return new Ast.Expr.Literal(new Character(c));
         }
 
@@ -497,6 +536,7 @@ public final class Parser {
             temp = temp.replaceAll("\\\\\"","\"");
             temp = temp.replaceAll("\\\\","\\");
 
+            match(Token.Type.STRING);
             return new Ast.Expr.Literal(new String(temp));
         }
 
@@ -508,38 +548,6 @@ public final class Parser {
         }
 
         /**Function Expression**/
-        /*if(peek(Token.Type.IDENTIFIER)){
-
-            String name = tokens.get(0).getLiteral();
-            match(Token.Type.IDENTIFIER);
-            if(match("(")){
-                if(match(")")){                                                 //Handles zero arguments
-                    return new Ast.Expr.Function(Optional.empty(), name, new ArrayList<Ast.Expr>());
-                }
-
-                List<Ast.Expr> arguments = new ArrayList<Ast.Expr>();
-                Ast.Expr expression = parseExpression();
-                arguments.add(expression);
-                /*while(match(",")){
-                    System.out.println("HERE");
-                    expression = parseExpression();
-                    arguments.add(expression);
-                }
-                match(")");
-                return new Ast.Expr.Function(Optional.empty(),name,arguments);
-            }
-
-            else{
-                while(match(",")){
-                    System.out.println("HERE");
-                    Ast.Expr expression = parseExpression();
-                    arguments.add(expression);
-                }
-                return new Ast.Expr.Access(Optional.empty(),name); //Fixed test case #2 of FunctionExpression  //Doesn't work for #3
-            }
-
-        }*/
-
         /**
          * identifier
          *      ('('
@@ -565,14 +573,19 @@ public final class Parser {
                     expression = parseExpression();
                     arguments.add(expression);
                 }
-                return new Ast.Expr.Function(Optional.empty(), name, arguments);
+                if(match(")")) {
+                    return new Ast.Expr.Function(Optional.empty(), name, arguments);
+                }
+                else{
+                    throw new ParseException("No ) parenthesis", tokens.index);
+                }
             }
             else{
                 return new Ast.Expr.Access(Optional.empty(),name);
             }
         }
 
-        return new Ast.Expr.Literal(tokens.get(0));                                 /**NEED TO CHANGE*/
+        throw new ParseException("Input not handled by grammar", tokens.index);
     }
 
     /**
