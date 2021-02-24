@@ -32,16 +32,19 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException { //TODO      //https://www.craftinginterpreters.com/parsing-expressions.html
+        /** field* method* */
         List<Ast.Field> fields = new ArrayList<Ast.Field>();
         List<Ast.Method> methods = new ArrayList<Ast.Method>();
+        boolean seenMethod = false;
 
-        /**NEEDS STUFF*/
         while(peek("LET") || peek("DEF")){
             if(peek("LET")){
+                if(seenMethod){throw new ParseException("Field can't follow Method", tokens.get(0).getIndex());}    //Handles error of Method followed by Field
                 Ast.Field temp = parseField();
                 fields.add(temp);
             }
             if(peek("DEF")){
+                seenMethod = true;
                 Ast.Method temp = parseMethod();
                 methods.add(temp);
             }
@@ -55,6 +58,7 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException { //TODO
+        /** 'LET' identifier ('=' expression)? ';' */
         if(match("LET")){
             if(peek(Token.Type.IDENTIFIER)){
                 String name = tokens.get(0).getLiteral();
@@ -81,6 +85,7 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException { //TODO
+        /** 'DEF' identifier '(' (identifier (',' identifier)*)? ')' 'DO' statement* 'END' */
         if(match("DEF")){
             if(peek(Token.Type.IDENTIFIER)) {
                 String name = tokens.get(0).getLiteral();
@@ -105,7 +110,7 @@ public final class Parser {
                             }
                         }
                         else{
-                            throw new ParseException("Missing Do statement", tokens.index + 1);
+                            throw new ParseException("Missing Do statement", tokens.get(0).getIndex());
                         }
                     }
 
@@ -168,6 +173,7 @@ public final class Parser {
             return parseReturnStatement();
         }
         else{
+            /** expression ('=' expression)? ';' */
             Ast.Expr left = parseExpression();
             if(peek("=")){
                 String operator = tokens.get(0).getLiteral();
@@ -191,6 +197,7 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException { //TODO      PASSED: Declaration
+        /** 'LET' identifier ('=' expression)? ';' */
         if(match("LET")) {
             String name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
@@ -213,6 +220,7 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Stmt.If parseIfStatement() throws ParseException { //TODO                        PASSED: If
+        /** 'IF' expression 'DO' statement* ('ELSE' statement*)? 'END' */
         if(match("IF")) {
             Ast.Expr expression = parseExpression();
             List<Ast.Stmt> thenStatements = new ArrayList<Ast.Stmt>();
@@ -262,6 +270,7 @@ public final class Parser {
      * {@code FOR}.
      */
     public Ast.Stmt.For parseForStatement() throws ParseException { //TODO                      PASSED: For
+        /** 'FOR' identifier 'IN' expression 'DO' statement* 'END' */
         if(match("FOR")){
             String name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
@@ -299,6 +308,7 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Stmt.While parseWhileStatement() throws ParseException { //TODO                  PASSED: While
+        /** 'WHILE' expression 'DO' statement* 'END' */
         if(match("WHILE")){
             Ast.Expr expression = parseExpression();
             List<Ast.Stmt> stmtList = new ArrayList<Ast.Stmt>();
@@ -332,6 +342,7 @@ public final class Parser {
      * {@code RETURN}.
      */
     public Ast.Stmt.Return parseReturnStatement() throws ParseException { //TODO                PASSED: Return
+        /** 'RETURN' expression ';' */
         if(match("RETURN")){
             Ast.Expr expression = parseExpression();
             match(";");
@@ -345,6 +356,7 @@ public final class Parser {
      * Parses the {@code expression} rule.
      */
     public Ast.Expr parseExpression() throws ParseException { //TODO                            PASSED: Binary, Group
+        /** logical_expression */
         return parseLogicalExpression();
     }
 
@@ -352,6 +364,7 @@ public final class Parser {
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expr parseLogicalExpression() throws ParseException { //TODO
+        /** comparison_expression (('AND' | 'OR') comparison_expression)* */
         Ast.Expr left = parseEqualityExpression();
 
         while (peek("AND") || peek("OR")){
@@ -368,6 +381,7 @@ public final class Parser {
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expr parseEqualityExpression() throws ParseException { //TODO
+        /** additive_expression (('<' | '<=' | '>' | '>=' | '==' | '!=') additive_expression)* */
         Ast.Expr left = parseAdditiveExpression();
 
         while (peek(">") || peek(">=") || peek("<") || peek("<=") || peek("==") || peek("!=")){
@@ -384,6 +398,7 @@ public final class Parser {
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expr parseAdditiveExpression() throws ParseException { //TODO
+        /** multiplicative_expression (('+' | '-') multiplicative_expression)* */
         Ast.Expr left = parseMultiplicativeExpression();
 
         if (peek("+") || peek("-")){
@@ -400,6 +415,7 @@ public final class Parser {
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expr parseMultiplicativeExpression() throws ParseException { //TODO
+        /** secondary_expression (('*' | '/') secondary_expression)* */
         Ast.Expr left = parseSecondaryExpression();
 
         while (peek("*") || peek("/")){
@@ -416,7 +432,9 @@ public final class Parser {
      * Parses the {@code secondary-expression} rule.
      */
     public Ast.Expr parseSecondaryExpression() throws ParseException { //TODO                   PASSED: Access
+        /** primary_expression ('.' identifier ('(' (expression (',' expression)*)? ')')?)* */
         Ast.Expr left = parsePrimaryExpression();
+
         /**
          * ('.' identifier
          *      ( '('
@@ -470,12 +488,12 @@ public final class Parser {
      */
     public Ast.Expr parsePrimaryExpression() { //TODO                                           PASSED: Literal, Function
 
-        /**Literal**/
+        /**Literal  'NIL' | 'TRUE' | 'FALSE' **/
         if(match("NIL")){return new Ast.Expr.Literal(null);}
         if(match("TRUE")){return new Ast.Expr.Literal(true);}
         if(match("FALSE")){return new Ast.Expr.Literal(false);}
 
-        /**Token Types**/
+        /**Token Types  integer | decimal | character | string **/
         if(peek(Token.Type.INTEGER)){
             String integer = tokens.get(0).getLiteral();
             match(Token.Type.INTEGER);
@@ -537,7 +555,7 @@ public final class Parser {
             return new Ast.Expr.Literal(new String(temp));
         }
 
-        /**Group Expression**/
+        /**Group Expression  '(' expression ')'  **/
         if(match("(")){
             Ast.Expr expression = parseExpression();
             if(match(")")){
