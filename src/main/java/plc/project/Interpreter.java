@@ -24,78 +24,95 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Source ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Source ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Field ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Field ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Method ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Method ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Stmt.Expression ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.Declaration ast) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+    public Environment.PlcObject visit(Ast.Stmt.Declaration ast) { //TODO (in lecture)
+        if(ast.getValue().isPresent()){
+            scope.defineVariable(ast.getName(),visit(ast.getValue().get()));
+        }
+        else{
+            scope.defineVariable(ast.getName(), Environment.NIL);
+        }
+        return Environment.NIL;
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.Assignment ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Stmt.Assignment ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.If ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Stmt.If ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.For ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Stmt.For ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.While ast) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+    public Environment.PlcObject visit(Ast.Stmt.While ast) { //TODO (in lecture)
+        while(requireType(Boolean.class,visit(ast.getCondition()))){
+            try{
+                scope = new Scope(scope);
+                for(Ast.Stmt statement : ast.getStatements()){
+                    visit(statement);
+                }
+            }
+            finally {
+                scope = scope.getParent();
+            }
+        }
+        return Environment.NIL;
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.Return ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Stmt.Return ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Literal ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Expr.Literal ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Expr.Group ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Expr.Access ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+    public Environment.PlcObject visit(Ast.Expr.Function ast) { //TODO
+        throw new UnsupportedOperationException();
     }
 
     /**
