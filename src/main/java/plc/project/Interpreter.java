@@ -9,6 +9,13 @@ import java.util.stream.Collectors;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
+    /**
+     * https://www.craftinginterpreters.com/evaluating-expressions.html
+     * https://www.craftinginterpreters.com/statements-and-state.html
+     * https://www.craftinginterpreters.com/control-flow.html
+     * https://www.craftinginterpreters.com/functions.html
+     **/
+
     private Scope scope = new Scope(null);
 
     public Interpreter(Scope parent) {
