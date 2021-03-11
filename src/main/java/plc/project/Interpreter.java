@@ -98,20 +98,59 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Literal ast) { //TODO
-        //if(ast.getLiteral() == null)
-           // return Environment.NIL                                    //FIGURE OUT HOW TO RETURN ENVIRONMENT.NIL
-        return new Environment.PlcObject(scope ,ast.getLiteral());
+    public Environment.PlcObject visit(Ast.Expr.Literal ast) { //TODO       PASSED: LiteralExpression
+        if(ast.getLiteral() == null) {
+            return Environment.NIL;                                     //FIGURE OUT HOW TO RETURN ENVIRONMENT.NIL
+        }
+
+        /**Documentation hint: use "Environment.create" as needed (BUT we must return an Environment.PLCObject)*/
+
+        /**All 3 pass*/
+        //return Environment.create(ast.getLiteral());
+        //return new Environment.PlcObject(null, ast.getLiteral());
+        return new Environment.PlcObject(scope, ast.getLiteral());          //Do we make a new scope each time?
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Group ast) { //TODO
-        throw new UnsupportedOperationException();
+        String expression = ast.getExpression().toString();
+        System.out.println(ast.getExpression());
+        return new Environment.PlcObject(scope, ast.getExpression());
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO
-        throw new UnsupportedOperationException();
+    public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO          PASSED: And, Or,
+        //throw new UnsupportedOperationException();
+
+        Environment.PlcObject left = Environment.create(ast.getLeft());
+        System.out.println(left.getValue());
+        Environment.PlcObject right = Environment.create(ast.getRight());
+
+        switch (ast.getOperator()){
+            case "AND":
+                if(left == right){
+                    return Environment.create(true);
+                }
+                return Environment.create(false);
+            case "OR":
+                if(ast.getLeft().toString().equals("false") && ast.getRight().toString().equals("false")){
+                    return Environment.create(false);
+                }
+                return Environment.create(true);
+            case ">":
+            case ">=":
+            case "<":
+            case "<=":
+            case "==":
+            case "!=":
+            case "+":
+                //String Concatenation
+                //Number Addition
+            case "-":
+            case "*":
+            case "/":
+        }
+        return Environment.NIL;
     }
 
     @Override
@@ -131,7 +170,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         if (type.isInstance(object.getValue())) {
             return type.cast(object.getValue());
         } else {
-            throw new RuntimeException("Expected type " + type.getName() + ", received " + object.getValue().getClass().getName() + "."); //TODO
+            throw new RuntimeException("Expected type " + type.getName() + ", received " + object.getValue().getClass().getName() + ".");
         }
     }
 
