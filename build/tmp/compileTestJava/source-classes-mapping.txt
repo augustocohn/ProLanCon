@@ -4,3 +4,5 @@ plc/homework/RegexTests.java
  plc.homework.RegexTests
 plc/project/ParserTests.java
  plc.project.ParserTests
+plc/project/InterpreterTests.java
+ plc.project.InterpreterTests

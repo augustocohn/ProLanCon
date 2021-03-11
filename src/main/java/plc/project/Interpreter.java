@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
@@ -104,58 +105,175 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         }
 
         /**Documentation hint: use "Environment.create" as needed (BUT we must return an Environment.PLCObject)*/
-
-        /**All 3 pass*/
-        //return Environment.create(ast.getLiteral());
-        //return new Environment.PlcObject(null, ast.getLiteral());
-        return new Environment.PlcObject(scope, ast.getLiteral());          //Do we make a new scope each time?
+        return Environment.create(ast.getLiteral());
+        //return new Environment.PlcObject(scope, ast.getLiteral());          //Do we make a new scope each time?
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Group ast) { //TODO
-        String expression = ast.getExpression().toString();
-        System.out.println(ast.getExpression());
-        return new Environment.PlcObject(scope, ast.getExpression());
+
+        return visit(ast.getExpression());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO          PASSED: And, Or,
         //throw new UnsupportedOperationException();
 
-        Environment.PlcObject left = Environment.create(ast.getLeft());
-        System.out.println(left.getValue());
-        Environment.PlcObject right = Environment.create(ast.getRight());
+        Environment.PlcObject left = visit(ast.getLeft());
+        Environment.PlcObject right = visit(ast.getRight());
 
         switch (ast.getOperator()){
             case "AND":
-                if(left == right){
+                if(requireType(Boolean.class, left) && requireType(Boolean.class, right)){
                     return Environment.create(true);
                 }
                 return Environment.create(false);
+
             case "OR":
-                if(ast.getLeft().toString().equals("false") && ast.getRight().toString().equals("false")){
+                if(requireType(Boolean.class, left)){
+                    return Environment.create(true);
+                }
+                else if(requireType(Boolean.class, right)){
+                    return Environment.create(true);
+                }
+                return Environment.create(false);
+
+            case ">":
+                if(compareType(left, right) == 0){
+                    int temp = requireType(BigInteger.class, left).compareTo(requireType(BigInteger.class, right));
+                    if(temp > 0){return Environment.create(true);}
+
                     return Environment.create(false);
                 }
-                return Environment.create(true);
-            case ">":
+                if(compareType(left, right) == 1){
+                    int temp = requireType(BigDecimal.class, left).compareTo(requireType(BigDecimal.class, right));
+                    if(temp > 0){return Environment.create(true);}
+
+                    return Environment.create(false);
+                }
+
             case ">=":
+                if(compareType(left, right) == 0){
+                    int temp = requireType(BigInteger.class, left).compareTo(requireType(BigInteger.class, right));
+                    if(temp >= 0){return Environment.create(true);}
+
+                    return Environment.create(false);
+                }
+                if(compareType(left, right) == 1){
+                    int temp = requireType(BigDecimal.class, left).compareTo(requireType(BigDecimal.class, right));
+                    if(temp >= 0){return Environment.create(true);}
+
+                    return Environment.create(false);
+                }
+
             case "<":
+                if(compareType(left, right) == 0){
+                    int temp = requireType(BigInteger.class, left).compareTo(requireType(BigInteger.class, right));
+                    if(temp < 0){return Environment.create(true);}
+
+                    return Environment.create(false);
+                }
+                if(compareType(left, right) == 1){
+                    int temp = requireType(BigDecimal.class, left).compareTo(requireType(BigDecimal.class, right));
+                    if(temp < 0){return Environment.create(true);}
+
+                    return Environment.create(false);
+                }
+
             case "<=":
+                if(compareType(left, right) == 0){
+                    int temp = requireType(BigInteger.class, left).compareTo(requireType(BigInteger.class, right));
+                    if(temp <= 0){return Environment.create(true);}
+
+                    return Environment.create(false);
+                }
+                if(compareType(left, right) == 1){
+                    int temp = requireType(BigDecimal.class, left).compareTo(requireType(BigDecimal.class, right));
+                    if(temp <= 0){return Environment.create(true);}
+
+                    return Environment.create(false);
+                }
+
             case "==":
+                if(compareType(left, right) != -1){
+                    if(Objects.equals(left, right)){
+                        return Environment.create(true);
+                    }
+                }
+                return Environment.create(false);
+
             case "!=":
+                if(compareType(left, right) != -1){
+                    if(Objects.equals(left, right)){
+                        return Environment.create(false);
+                    }
+                }
+                return Environment.create(true);
+
             case "+":
                 //String Concatenation
+                if((left.getValue() instanceof String) || (right.getValue() instanceof String)){
+                    String temp = left.getValue().toString() + right.getValue().toString();
+                    return Environment.create(temp);
+                }
+
                 //Number Addition
+                if(compareType(left, right) == 0){
+                    BigInteger temp = ((BigInteger) left.getValue()).add((BigInteger) right.getValue());
+                    return Environment.create(temp);
+                }
+                if(compareType(left, right) == 1){
+                    BigDecimal temp = ((BigDecimal) left.getValue()).add((BigDecimal) right.getValue());
+                    return Environment.create(temp);
+                }
+
             case "-":
+                if(compareType(left, right) == 0){
+                    BigInteger temp = ((BigInteger) left.getValue()).subtract((BigInteger) right.getValue());
+                    return Environment.create(temp);
+                }
+                if(compareType(left, right) == 1){
+                    BigDecimal temp = ((BigDecimal) left.getValue()).subtract((BigDecimal) right.getValue());
+                    return Environment.create(temp);
+                }
+
             case "*":
+                if(compareType(left, right) == 0){
+                    BigInteger temp = ((BigInteger) left.getValue()).multiply((BigInteger) right.getValue());
+                    return Environment.create(temp);
+                }
+                if(compareType(left, right) == 1){
+                    BigDecimal temp = ((BigDecimal) left.getValue()).multiply((BigDecimal) right.getValue());
+                    return Environment.create(temp);
+                }
+
             case "/":
+                if (right.getValue().toString().equals("0")) {
+                    throw new RuntimeException();
+                }
+                if(compareType(left, right) == 0){
+                    BigInteger temp = ((BigInteger) left.getValue()).divide((BigInteger) right.getValue());
+                    return Environment.create(temp);
+                }
+                if(compareType(left, right) == 1){
+                    BigDecimal temp = ((BigDecimal) left.getValue()).divide((BigDecimal) right.getValue(), RoundingMode.HALF_EVEN);
+                    return Environment.create(temp);
+                }
         }
         return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Access ast) { //TODO
-        throw new UnsupportedOperationException();
+        if(ast.getReceiver().isPresent()){
+            Ast.Expr temp = ast.getReceiver().get();
+            scope.defineVariable(ast.getReceiver().get().toString(),Environment.create(ast.getName()));
+            System.out.println(ast.getReceiver().get());
+            return new Environment.PlcObject(scope,ast.getReceiver());
+        }
+
+        //When the Receiver is empty (Not present)
+        return Environment.create(ast.getName());
     }
 
     @Override
@@ -172,6 +290,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         } else {
             throw new RuntimeException("Expected type " + type.getName() + ", received " + object.getValue().getClass().getName() + ".");
         }
+    }
+
+    private static int compareType (Environment.PlcObject left, Environment.PlcObject right){
+        if((left.getValue() instanceof BigInteger) && (right.getValue() instanceof BigInteger)){
+            return 0;
+        }
+        if((left.getValue() instanceof BigDecimal) && (right.getValue() instanceof BigDecimal)){
+            return 1;
+        }
+        if((left.getValue() instanceof Boolean) && (right.getValue() instanceof Boolean)){
+            return 2;
+        }
+        if((left.getValue() instanceof String) && (right.getValue() instanceof String)){
+            return 3;
+        }
+        return -1;
     }
 
     /**
