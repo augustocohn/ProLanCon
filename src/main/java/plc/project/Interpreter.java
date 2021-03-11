@@ -100,28 +100,20 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Literal ast) { //TODO       PASSED: LiteralExpression
-        if(ast.getLiteral() == null) {
-            return Environment.NIL;                                     //FIGURE OUT HOW TO RETURN ENVIRONMENT.NIL
-        }
-
-        /**Documentation hint: use "Environment.create" as needed (BUT we must return an Environment.PLCObject)*/
+        if(ast.getLiteral() == null)
+            return Environment.NIL;
         return Environment.create(ast.getLiteral());
-        //return new Environment.PlcObject(scope, ast.getLiteral());          //Do we make a new scope each time?
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Group ast) { //TODO
-
         return visit(ast.getExpression());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO          PASSED: And, Or,
-        //throw new UnsupportedOperationException();
-
         Environment.PlcObject left = visit(ast.getLeft());
         Environment.PlcObject right = visit(ast.getRight());
-
         switch (ast.getOperator()){
             case "AND":
                 if(requireType(Boolean.class, left) && requireType(Boolean.class, right)){
@@ -271,7 +263,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             System.out.println(ast.getReceiver().get());
             return new Environment.PlcObject(scope,ast.getReceiver());
         }
-
         //When the Receiver is empty (Not present)
         return Environment.create(ast.getName());
     }
