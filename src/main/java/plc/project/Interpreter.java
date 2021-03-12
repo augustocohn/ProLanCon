@@ -265,20 +265,41 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Access ast) { //TODO
-        if(ast.getReceiver().isPresent()){
-            Ast.Expr temp = ast.getReceiver().get();
-            scope.defineVariable(ast.getReceiver().get().toString(),Environment.create(ast.getName()));
-            System.out.println(ast.getReceiver().get());
-            return new Environment.PlcObject(scope,ast.getReceiver());
-        }
+        System.out.println("AST: " + ast);
+        System.out.println("Outer name: " + ast.getName());
+        System.out.println("Outer receiver: " + ast.getReceiver());
 
-        //When the Receiver is empty (Not present)
+
+        if(ast.getReceiver().isPresent()){          //Object.field
+            Environment.PlcObject temp = visit(ast.getReceiver().get());
+            System.out.println("Inner: " + temp);
+            System.out.println(scope);
+            System.out.println(temp.getField(ast.getName()));
+        }
+        else{
+
+        }
         return Environment.create(ast.getName());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Function ast) { //TODO
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+        System.out.println(ast.getName());
+        System.out.println(ast.getReceiver());
+        System.out.println(ast.getArguments());
+        //(List<Environment.PlcObject>) ast.getArguments();
+
+        if(ast.getReceiver().isPresent()){
+            Environment.PlcObject temp = visit(ast.getReceiver().get());
+            System.out.println(temp);
+            //return new Environment.Function(temp.getValue(), ast.getArguments().size(), )
+        }
+
+
+        Environment.PlcObject temp = Environment.create(ast.getArguments());
+        //scope.defineFunction(ast.getName(),ast.getArguments().size(), ast.getArguments());
+        return Environment.create(ast.getName());
     }
 
     /**
