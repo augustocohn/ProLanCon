@@ -66,10 +66,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Stmt.Assignment ast) { //TODO                    PASSED: Variable & Field
         Ast.Expr.Access receiverAsgmt = (Ast.Expr.Access) ast.getReceiver();
 
-        System.out.println("Assignment: " + ast);
-        System.out.println("Assignment receiver: " + ast.getReceiver());
-        System.out.println("Assignment value: " + ast.getValue() + "\n");
-
         //Access has a receiver
         if(receiverAsgmt.getReceiver().isPresent()){
             Environment.PlcObject receiverAcc = visit(receiverAsgmt.getReceiver().get());
@@ -89,26 +85,19 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.If ast) { //TODO                            PASSED: If
-        System.out.println("Ast: " + ast);
-        System.out.println("Condition: " + ast.getCondition());
-        System.out.println("Then: " + ast.getThenStatements());
-        System.out.println("Else: " + ast.getElseStatements());
-
-        //Environment.PlcObject cond = visit(ast.getCondition());
+        Environment.PlcObject cond = visit(ast.getCondition());
 
         //Check if the condition is a Boolean
-        if(requireType(Boolean.class, visit(ast.getCondition()))){
+        if(cond.getValue().equals(true)){
             scope = new Scope(scope);
-            //if(cond.getValue().toString().equals("true")){
-                for(Ast.Stmt stmt : ast.getThenStatements()){
-                    visit(stmt);
-                }
-            //}
+            for(Ast.Stmt stmt : ast.getThenStatements()){
+                visit(stmt);
+            }
             scope = scope.getParent();
         }
 
         //Not a Boolean
-        else{
+        else if(cond.getValue().equals(false)){
             scope = new Scope(scope);
             for(Ast.Stmt stmt : ast.getElseStatements()){
                 visit(stmt);
@@ -309,26 +298,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Access ast) { //TODO
-        //System.out.println("AST: " + ast);
-        //System.out.println("Outer name: " + ast.getName());
-        //System.out.println("Outer receiver: " + ast.getReceiver());
-
-        /**
-         * Scope: {variable[->null, "variable"], object[->Obj, "object"]}
-         * Object: {field[->null, "object.field"]}
-         * */
-
+    public Environment.PlcObject visit(Ast.Expr.Access ast) { //TODO                        PASSED: Access
         //Has a receiver
         if(ast.getReceiver().isPresent()){          //Object.field
             Environment.PlcObject temp = visit(ast.getReceiver().get());
             Environment.Variable var =  temp.getField(ast.getName());
             return var.getValue();
-
-            //System.out.println("Start scope: " + scope.lookupVariable(ast.getName()));      //Search for "Field" FAILS
-            //System.out.println("Scope: " + scope.lookupVariable(temp.getValue().toString()));       //Search for "Object"
-            //return Environment.create(scope.lookupVariable(temp.getValue().toString()).getValue());
-            //return Environment.create(scope.lookupVariable(temp.getValue().toString()).getValue());
         }
 
         //Receiver is empty
@@ -336,13 +311,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Function ast) { //TODO
-        //throw new UnsupportedOperationException();
-        System.out.println("Name: " + ast.getName());
-        System.out.println("Receiver: " + ast.getReceiver());
-        System.out.println("Arguments: " + ast.getArguments());
-        //(List<Environment.PlcObject>) ast.getArguments();
-
+    public Environment.PlcObject visit(Ast.Expr.Function ast) { //TODO                      PASSED: Function
         //Has a receiver
         if(ast.getReceiver().isPresent()){
             List<Environment.PlcObject> args = new ArrayList<Environment.PlcObject>();
