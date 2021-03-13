@@ -1,11 +1,13 @@
 package plc.project;
 
+import javax.xml.bind.SchemaOutputResolver;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
@@ -43,12 +45,16 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) { //TODO
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+        
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Expression ast) { //TODO
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+        visit(ast.getExpression());
+        return Environment.NIL;
     }
 
     @Override
@@ -110,7 +116,18 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.For ast) { //TODO
-        throw new UnsupportedOperationException();
+        if(requireType(Iterable.class, visit(ast.getValue())) != null) {
+            Consumer<Environment.PlcObject> loop = (n) -> {
+                scope = new Scope(scope);
+                scope.defineVariable(ast.getName(), n);
+                for(Ast.Stmt stmt : ast.getStatements()){
+                    visit(stmt);
+                }
+                scope = scope.getParent();
+            };
+            requireType(Iterable.class, visit(ast.getValue())).forEach(loop);
+        }
+        return Environment.NIL;
     }
 
     @Override
@@ -131,7 +148,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Return ast) { //TODO
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+        throw new Return(visit(ast.getValue()));
     }
 
     @Override
