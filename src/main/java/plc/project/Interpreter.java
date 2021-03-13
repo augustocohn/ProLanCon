@@ -52,7 +52,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.Declaration ast) { //TODO (in lecture)
+    public Environment.PlcObject visit(Ast.Stmt.Declaration ast) { //TODO (in lecture)      PASSED: Declaration
         if(ast.getValue().isPresent()){
             scope.defineVariable(ast.getName(),visit(ast.getValue().get()));
         }
@@ -63,13 +63,60 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.Assignment ast) { //TODO
-        throw new UnsupportedOperationException();
+    public Environment.PlcObject visit(Ast.Stmt.Assignment ast) { //TODO                    PASSED: Variable & Field
+        Ast.Expr.Access receiverAsgmt = (Ast.Expr.Access) ast.getReceiver();
+
+        System.out.println("Assignment: " + ast);
+        System.out.println("Assignment receiver: " + ast.getReceiver());
+        System.out.println("Assignment value: " + ast.getValue() + "\n");
+
+        //Access has a receiver
+        if(receiverAsgmt.getReceiver().isPresent()){
+            Environment.PlcObject receiverAcc = visit(receiverAsgmt.getReceiver().get());
+
+            receiverAcc.setField(receiverAsgmt.getName(),visit(ast.getValue()));
+        }
+
+        //Access doesn't have a receiver
+        else{
+            Environment.Variable var = scope.lookupVariable(receiverAsgmt.getName());
+
+            var.setValue(visit(ast.getValue()));
+        }
+
+        return  Environment.NIL;
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.If ast) { //TODO
-        throw new UnsupportedOperationException();
+    public Environment.PlcObject visit(Ast.Stmt.If ast) { //TODO                            PASSED: If
+        System.out.println("Ast: " + ast);
+        System.out.println("Condition: " + ast.getCondition());
+        System.out.println("Then: " + ast.getThenStatements());
+        System.out.println("Else: " + ast.getElseStatements());
+
+        //Environment.PlcObject cond = visit(ast.getCondition());
+
+        //Check if the condition is a Boolean
+        if(requireType(Boolean.class, visit(ast.getCondition()))){
+            scope = new Scope(scope);
+            //if(cond.getValue().toString().equals("true")){
+                for(Ast.Stmt stmt : ast.getThenStatements()){
+                    visit(stmt);
+                }
+            //}
+            scope = scope.getParent();
+        }
+
+        //Not a Boolean
+        else{
+            scope = new Scope(scope);
+            for(Ast.Stmt stmt : ast.getElseStatements()){
+                visit(stmt);
+            }
+            scope = scope.getParent();
+        }
+
+        return Environment.NIL;
     }
 
     @Override
@@ -78,7 +125,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.While ast) { //TODO (in lecture)
+    public Environment.PlcObject visit(Ast.Stmt.While ast) { //TODO (in lecture)            PASSED: While
         while(requireType(Boolean.class,visit(ast.getCondition()))){
             try{
                 scope = new Scope(scope);
@@ -99,14 +146,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Literal ast) { //TODO       PASSED: LiteralExpression
+    public Environment.PlcObject visit(Ast.Expr.Literal ast) { //TODO                       PASSED: LiteralExpression
         if(ast.getLiteral() == null) {
-            return Environment.NIL;                                     //FIGURE OUT HOW TO RETURN ENVIRONMENT.NIL
+            return Environment.NIL;
         }
 
-        /**Documentation hint: use "Environment.create" as needed (BUT we must return an Environment.PLCObject)*/
         return Environment.create(ast.getLiteral());
-        //return new Environment.PlcObject(scope, ast.getLiteral());          //Do we make a new scope each time?
     }
 
     @Override
@@ -116,7 +161,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO          PASSED: And, Or,
+    public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO                        PASSED: And, Or,
         //throw new UnsupportedOperationException();
 
         Environment.PlcObject left = visit(ast.getLeft());
@@ -265,41 +310,59 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Access ast) { //TODO
-        System.out.println("AST: " + ast);
-        System.out.println("Outer name: " + ast.getName());
-        System.out.println("Outer receiver: " + ast.getReceiver());
+        //System.out.println("AST: " + ast);
+        //System.out.println("Outer name: " + ast.getName());
+        //System.out.println("Outer receiver: " + ast.getReceiver());
 
+        /**
+         * Scope: {variable[->null, "variable"], object[->Obj, "object"]}
+         * Object: {field[->null, "object.field"]}
+         * */
 
+        //Has a receiver
         if(ast.getReceiver().isPresent()){          //Object.field
             Environment.PlcObject temp = visit(ast.getReceiver().get());
-            System.out.println("Inner: " + temp);
-            System.out.println(scope);
-            System.out.println(temp.getField(ast.getName()));
-        }
-        else{
+            Environment.Variable var =  temp.getField(ast.getName());
+            return var.getValue();
 
+            //System.out.println("Start scope: " + scope.lookupVariable(ast.getName()));      //Search for "Field" FAILS
+            //System.out.println("Scope: " + scope.lookupVariable(temp.getValue().toString()));       //Search for "Object"
+            //return Environment.create(scope.lookupVariable(temp.getValue().toString()).getValue());
+            //return Environment.create(scope.lookupVariable(temp.getValue().toString()).getValue());
         }
-        return Environment.create(ast.getName());
+
+        //Receiver is empty
+        return scope.lookupVariable(ast.getName()).getValue();
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Function ast) { //TODO
         //throw new UnsupportedOperationException();
-        System.out.println(ast.getName());
-        System.out.println(ast.getReceiver());
-        System.out.println(ast.getArguments());
+        System.out.println("Name: " + ast.getName());
+        System.out.println("Receiver: " + ast.getReceiver());
+        System.out.println("Arguments: " + ast.getArguments());
         //(List<Environment.PlcObject>) ast.getArguments();
 
+        //Has a receiver
         if(ast.getReceiver().isPresent()){
+            List<Environment.PlcObject> args = new ArrayList<Environment.PlcObject>();
+            for(Ast.Expr expr : ast.getArguments()){
+                args.add(visit(expr));
+            }
             Environment.PlcObject temp = visit(ast.getReceiver().get());
-            System.out.println(temp);
-            //return new Environment.Function(temp.getValue(), ast.getArguments().size(), )
+
+            return temp.callMethod(ast.getName(),args);
         }
 
+        //Doesn't have a receiver
+        else{
+            List<Environment.PlcObject> args = new ArrayList<Environment.PlcObject>();
+            for(Ast.Expr expr : ast.getArguments()){
+                args.add(visit(expr));
+            }
 
-        Environment.PlcObject temp = Environment.create(ast.getArguments());
-        //scope.defineFunction(ast.getName(),ast.getArguments().size(), ast.getArguments());
-        return Environment.create(ast.getName());
+            return scope.lookupFunction(ast.getName(),args.size()).invoke(args);  //Invoke = call?
+        }
     }
 
     /**
