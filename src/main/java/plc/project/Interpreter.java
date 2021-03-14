@@ -35,24 +35,21 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) { //TODO
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Environment.PlcObject visit(Ast.Field ast) { //TODO
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Environment.PlcObject visit(Ast.Method ast) { //TODO
-        //throw new UnsupportedOperationException();
-        
         return Environment.NIL;
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.Expression ast) { //TODO
-        //throw new UnsupportedOperationException();
+    public Environment.PlcObject visit(Ast.Field ast) { //TODO
+        return Environment.NIL;
+    }
+
+    @Override
+    public Environment.PlcObject visit(Ast.Method ast) { //TODO
+        return Environment.NIL;
+    }
+
+    @Override
+    public Environment.PlcObject visit(Ast.Stmt.Expression ast) { //TODO                    PASSED: Expression
         visit(ast.getExpression());
         return Environment.NIL;
     }
@@ -115,7 +112,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Stmt.For ast) { //TODO
+    public Environment.PlcObject visit(Ast.Stmt.For ast) { //TODO                           PASSED: For
         if(requireType(Iterable.class, visit(ast.getValue())) != null) {
             Consumer<Environment.PlcObject> loop = (n) -> {
                 scope = new Scope(scope);
@@ -148,7 +145,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Return ast) { //TODO
-        //throw new UnsupportedOperationException();
         throw new Return(visit(ast.getValue()));
     }
 
@@ -162,34 +158,43 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Group ast) { //TODO
+    public Environment.PlcObject visit(Ast.Expr.Group ast) { //TODO                         PASSED: Group
 
         return visit(ast.getExpression());
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO                        PASSED: And, Or,
-        //throw new UnsupportedOperationException();
-
-        Environment.PlcObject left = visit(ast.getLeft());
-        Environment.PlcObject right = visit(ast.getRight());
+    public Environment.PlcObject visit(Ast.Expr.Binary ast) { //TODO                        PASSED: Binary
+        Environment.PlcObject left;
+        Environment.PlcObject right;
 
         switch (ast.getOperator()){
             case "AND":
-                if(requireType(Boolean.class, left) && requireType(Boolean.class, right)){
-                    return Environment.create(true);
+                left = visit(ast.getLeft());
+                if(requireType(Boolean.class, left)){
+                    right = visit(ast.getRight());
+                    if(requireType(Boolean.class, right)) {
+                        return Environment.create(true);
+                    }
                 }
                 return Environment.create(false);
 
             case "OR":
+                left = visit(ast.getLeft());
                 if(requireType(Boolean.class, left)){
-                    return Environment.create(true);
+                        return Environment.create(true);
                 }
-                else if(requireType(Boolean.class, right)){
+                right = visit(ast.getRight());
+                if(requireType(Boolean.class, right)){
                     return Environment.create(true);
                 }
                 return Environment.create(false);
+        }
 
+        left = visit(ast.getLeft());
+        right = visit(ast.getRight());
+
+        switch (ast.getOperator()){
             case ">":
                 if(compareType(left, right) == 0){
                     int temp = requireType(BigInteger.class, left).compareTo(requireType(BigInteger.class, right));

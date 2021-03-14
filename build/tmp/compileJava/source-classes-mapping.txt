@@ -42,4 +42,5 @@ plc/project/Parser.java
  plc.project.Parser$TokenStream
 plc/project/Interpreter.java
  plc.project.Interpreter
+ plc.project.Interpreter$1
  plc.project.Interpreter$Return
