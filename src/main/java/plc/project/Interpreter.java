@@ -35,16 +35,71 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) { //TODO
-        return Environment.NIL;
+        /*Environment.PlcObject temp = Environment.NIL;
+
+        for(Ast.Field field : ast.getFields()){
+            visit(field);
+        }
+        for(Ast.Method method : ast.getMethods()){
+            if(method.getName().equals("main") && (method.getParameters().size() == 0)){
+                temp = visit(method);
+                System.out.println(temp);
+            }
+            else {
+                visit(method);
+            }
+
+        }*/
+        List<Environment.PlcObject> temp = new ArrayList<Environment.PlcObject>();
+        for(Ast.Field field : ast.getFields()){
+            visit(field);
+        }
+        for(Ast.Method method : ast.getMethods()){
+            temp.add(visit(method));
+        }
+
+        return scope.lookupFunction("main",0).invoke(temp);
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Field ast) { //TODO
+        //Has value
+        if(ast.getValue().isPresent()){
+            scope.defineVariable(ast.getName(),visit(ast.getValue().get()));
+        }
+
+        //No value
+        else {
+            scope.defineVariable(ast.getName(), Environment.NIL);
+        }
+
         return Environment.NIL;
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Method ast) { //TODO
+    public Environment.PlcObject visit(Ast.Method ast) { //TODO                             PASSED: Method
+        Scope parent = scope;
+
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), args ->{
+            scope = new Scope(scope);
+
+            for(int i = 0; i < ast.getParameters().size(); i++){
+                scope.defineVariable(ast.getParameters().get(i), args.get(i));
+            }
+
+            for(Ast.Stmt stmt : ast.getStatements()){
+                try{
+                    visit(stmt);
+                }
+                catch (Return r){
+                    return r.value;
+                }
+            }
+
+            return Environment.NIL;
+        });
+        scope = parent;
+
         return Environment.NIL;
     }
 
@@ -343,7 +398,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             }
             Environment.PlcObject temp = visit(ast.getReceiver().get());
 
-            return temp.callMethod(ast.getName(),args);
+            return temp.callMethod(ast.getName(), args);
         }
 
         //Doesn't have a receiver
