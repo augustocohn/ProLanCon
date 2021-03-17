@@ -34,22 +34,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Source ast) { //TODO
-        /*Environment.PlcObject temp = Environment.NIL;
-
-        for(Ast.Field field : ast.getFields()){
-            visit(field);
-        }
-        for(Ast.Method method : ast.getMethods()){
-            if(method.getName().equals("main") && (method.getParameters().size() == 0)){
-                temp = visit(method);
-                System.out.println(temp);
-            }
-            else {
-                visit(method);
-            }
-
-        }*/
+    public Environment.PlcObject visit(Ast.Source ast) { //TODO                             PASSED: Source
         List<Environment.PlcObject> temp = new ArrayList<Environment.PlcObject>();
         for(Ast.Field field : ast.getFields()){
             visit(field);
@@ -62,7 +47,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     }
 
     @Override
-    public Environment.PlcObject visit(Ast.Field ast) { //TODO
+    public Environment.PlcObject visit(Ast.Field ast) { //TODO                              PASSED: Field
         //Has value
         if(ast.getValue().isPresent()){
             scope.defineVariable(ast.getName(),visit(ast.getValue().get()));
@@ -80,8 +65,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Method ast) { //TODO                             PASSED: Method
         Scope parent = scope;
 
-        scope.defineFunction(ast.getName(), ast.getParameters().size(), args ->{
-            scope = new Scope(scope);
+        parent.defineFunction(ast.getName(), ast.getParameters().size(), args ->{
+            scope = new Scope(parent);
 
             for(int i = 0; i < ast.getParameters().size(); i++){
                 scope.defineVariable(ast.getParameters().get(i), args.get(i));
@@ -92,13 +77,14 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     visit(stmt);
                 }
                 catch (Return r){
+                    scope = parent;
                     return r.value;
                 }
             }
 
+            scope = parent;
             return Environment.NIL;
         });
-        scope = parent;
 
         return Environment.NIL;
     }
@@ -372,6 +358,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     return Environment.create(temp);
                 }
         }
+
+        if(compareType(left, right) == -1){
+            throw new RuntimeException();
+        }
+
         return Environment.NIL;
     }
 
