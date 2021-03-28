@@ -6,3 +6,5 @@ plc/project/ParserTests.java
  plc.project.ParserTests
 plc/project/InterpreterTests.java
  plc.project.InterpreterTests
+plc/project/AnalyzerTests.java
+ plc.project.AnalyzerTests

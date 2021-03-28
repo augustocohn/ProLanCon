@@ -75,18 +75,120 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Literal ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Expr.Literal ast) { // TODO                   PASSED: LITERAL
+
+        //Nil, Bool, Char, String
+        if(ast.getLiteral() == null){
+            ast.setType(Environment.Type.NIL);
+        }
+        else if(ast.getLiteral() instanceof Boolean){
+            ast.setType(Environment.Type.BOOLEAN);
+        }
+        else if(ast.getLiteral() instanceof Character){
+            ast.setType(Environment.Type.CHARACTER);
+        }
+        else if(ast.getLiteral() instanceof String){
+            ast.setType(Environment.Type.STRING);
+        }
+
+        //Integer
+        else if(ast.getLiteral() instanceof BigInteger){
+            if(((BigInteger) ast.getLiteral()).longValue() >= Integer.MIN_VALUE && ((BigInteger) ast.getLiteral()).longValue() <= Integer.MAX_VALUE) {
+                ast.setType(Environment.Type.INTEGER);
+            }
+            else{
+                throw new RuntimeException("Not within Integer range");
+            }
+        }
+
+        //Decimal
+        else if(ast.getLiteral() instanceof BigDecimal){
+            if(!(((BigDecimal) ast.getLiteral()).doubleValue() == Double.NEGATIVE_INFINITY || ((BigDecimal) ast.getLiteral()).doubleValue() == Double.POSITIVE_INFINITY)){
+                ast.setType(Environment.Type.DECIMAL);
+            }
+            else{
+                throw new RuntimeException("Not within Double range");
+            }
+        }
+
+        return null;
     }
 
     @Override
-    public Void visit(Ast.Expr.Group ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Expr.Group ast) { // TODO
+        if(!(ast.getExpression() instanceof Ast.Expr.Binary)){
+            throw new RuntimeException("Not a Binary expression");
+        }
+
+        visit(ast.getExpression());
+
+        return null;
     }
 
     @Override
-    public Void visit(Ast.Expr.Binary ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Expr.Binary ast) { // TODO                PASSED: Binary
+        visit(ast.getLeft());
+        visit(ast.getRight());
+
+        switch(ast.getOperator()){
+            case "AND":
+            case "OR":
+                if(!(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 0)){
+                    throw new RuntimeException("Not Boolean");
+                }
+                else{
+                    ast.setType(Environment.Type.BOOLEAN);
+                }
+                break;
+
+            case "<":
+            case "<=":
+            case ">":
+            case ">=":
+            case "==":
+            case "!=":
+                if(!(compareType(ast.getLeft().getType(), ast.getRight().getType()) == -1) && !(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 0)){
+                    ast.setType(Environment.Type.BOOLEAN);
+                }
+                else{
+                    throw new RuntimeException("Not Comparable");
+                }
+                break;
+
+            case "+":
+                //String Concatenation
+                if(ast.getLeft().getType().getName().equals("String") || ast.getRight().getType().getName().equals("String")){
+                    ast.setType(Environment.Type.STRING);
+                }
+
+                //Number Addition
+                else if(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 1){
+                    ast.setType(Environment.Type.INTEGER);
+                }
+                else if(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 2){
+                    ast.setType(Environment.Type.DECIMAL);
+                }
+                else{
+                    throw new RuntimeException("Not Addable");
+                }
+                break;
+
+            case "-":
+            case "*":
+            case "/":
+                if(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 1){
+                    ast.setType(Environment.Type.INTEGER);
+                }
+                else if(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 2){
+                    ast.setType(Environment.Type.DECIMAL);
+                }
+                else{
+                    throw new RuntimeException("Not Addable");
+                }
+                break;
+        }
+
+        return null;
     }
 
     @Override
@@ -99,8 +201,29 @@ public final class Analyzer implements Ast.Visitor<Void> {
         throw new UnsupportedOperationException();  // TODO
     }
 
-    public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        throw new UnsupportedOperationException();  // TODO
+    public static void requireAssignable(Environment.Type target, Environment.Type type) { // TODO
+        if(!type.getName().equals(target.getName())){throw new RuntimeException("Wrong type");}
+    }
+
+    //enum Type {Boolean, Integer, Decimal, Character, String}
+
+    public static int compareType (Environment.Type left, Environment.Type right){
+        if(left.getName().equals("Boolean") && right.getName().equals("Boolean")){
+            return 0;
+        }
+        if(left.getName().equals("Integer") && right.getName().equals("Integer")){
+            return 1;
+        }
+        if(left.getName().equals("Decimal") && right.getName().equals("Decimal")){
+            return 2;
+        }
+        if(left.getName().equals("Character") && right.getName().equals("Character")){
+            return 3;
+        }
+        if(left.getName().equals("String") && right.getName().equals("String")){
+            return 4;
+        }
+        return -1;
     }
 
 }
