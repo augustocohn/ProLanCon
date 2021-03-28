@@ -263,11 +263,14 @@ public final class Environment {
 
     static {
         registerType(Type.ANY);
+        registerType(Type.NIL);
+        registerType(Type.INTEGER_ITERABLE);
+        registerType(Type.COMPARABLE);
         registerType(Type.BOOLEAN);
         registerType(Type.INTEGER);
         registerType(Type.DECIMAL);
+        registerType(Type.CHARACTER);
         registerType(Type.STRING);
-        registerType(Type.NIL);
     }
 
 }

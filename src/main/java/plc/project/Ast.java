@@ -51,7 +51,7 @@ public abstract class Ast {
         private final String name;
         private final String typeName;
         private final Optional<Expr> value;
-        private Environment.Variable variable;
+        private Environment.Variable variable = null;
 
         public Field(String name, Optional<Expr> value) {
             this(name, "Any", value);
@@ -114,7 +114,7 @@ public abstract class Ast {
         private final List<String> parameterTypeNames;
         private final Optional<String> returnTypeName;
         private final List<Stmt> statements;
-        private Environment.Function function;
+        private Environment.Function function = null;
 
         public Method(String name, List<String> parameters, List<Stmt> statements) {
             this(name, parameters, new ArrayList<>(), Optional.of("Any"), statements);
@@ -470,7 +470,7 @@ public abstract class Ast {
         public static final class Literal extends Expr {
 
             private final Object literal;
-            private Environment.Type type;
+            private Environment.Type type = null;
 
             public Literal(Object literal) {
                 this.literal = literal;
@@ -488,6 +488,9 @@ public abstract class Ast {
 
             @Override
             public Environment.Type getType() {
+                if (type == null) {
+                    throw new IllegalStateException("type is uninitialized");
+                }
                 return type;
             }
 
@@ -508,7 +511,7 @@ public abstract class Ast {
         public static final class Group extends Expr {
 
             private final Expr expression;
-            private Environment.Type type;
+            private Environment.Type type = null;
 
             public Group(Expr expression) {
                 this.expression = expression;
@@ -520,6 +523,9 @@ public abstract class Ast {
 
             @Override
             public Environment.Type getType() {
+                if (type == null) {
+                    throw new IllegalStateException("type is uninitialized");
+                }
                 return type;
             }
 
@@ -547,7 +553,7 @@ public abstract class Ast {
             private final String operator;
             private final Expr left;
             private final Expr right;
-            private Environment.Type type;
+            private Environment.Type type = null;
 
             public Binary(String operator, Expr left, Expr right) {
                 this.operator = operator;
@@ -569,6 +575,9 @@ public abstract class Ast {
 
             @Override
             public Environment.Type getType() {
+                if (type == null) {
+                    throw new IllegalStateException("type is uninitialized");
+                }
                 return type;
             }
 
@@ -617,7 +626,7 @@ public abstract class Ast {
 
             public Environment.Variable getVariable() {
                 if (variable == null) {
-                    throw new IllegalStateException("Ast.Expr.Access variable is uninitialized");
+                    throw new IllegalStateException("variable is uninitialized");
                 }
                 return variable;
             }
@@ -628,7 +637,7 @@ public abstract class Ast {
 
             @Override
             public Environment.Type getType() {
-                return variable.getType();
+                return getVariable().getType();
             }
 
             @Override
@@ -676,6 +685,9 @@ public abstract class Ast {
             }
 
             public Environment.Function getFunction() {
+                if (function == null) {
+                    throw new IllegalStateException("function is uninitialized");
+                }
                 return function;
             }
 
@@ -685,7 +697,7 @@ public abstract class Ast {
 
             @Override
             public Environment.Type getType() {
-                return function.getReturnType();
+                return getFunction().getReturnType();
             }
 
             @Override
