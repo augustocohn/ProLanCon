@@ -153,6 +153,35 @@ public final class AnalyzerTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    public void testAccessExpression(String test, Ast.Expr.Access ast, Ast.Expr.Access expected) {
+        Scope scope = new Scope(null);
+        scope.defineVariable("variable", "Integer", Environment.Type.INTEGER, Environment.create("variable"));
+        Scope object = new Scope(null);
+        object.defineVariable("field", "Integer", Environment.Type.INTEGER, Environment.create("object.field"));
+        scope.defineVariable("object", "Object", Environment.Type.ANY, new Environment.PlcObject(object, "object"));
+        test(ast, expected, scope);
+    }
+
+    public static Stream<Arguments> testAccessExpression() {
+        return Stream.of(
+                Arguments.of("Variable",
+                        new Ast.Expr.Access(Optional.empty(), "variable"),
+                        init(new Ast.Expr.Access(Optional.empty(), "variable"), ast -> ast.setVariable(
+                                new Environment.Variable("variable", "Integer", Environment.Type.INTEGER, Environment.create(0)))
+                        )
+                ),
+
+                Arguments.of("Field",
+                        new Ast.Expr.Access(Optional.of(new Ast.Expr.Access(Optional.empty(), "object")), "field"),
+                        init(new Ast.Expr.Access(Optional.of(new Ast.Expr.Access(Optional.empty(), "object")), "field"), ast -> ast.setVariable
+                                (new Environment.Variable("field", "Integer", Environment.Type.INTEGER, Environment.create(0)))
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     public void testBinaryExpression(String test, Ast.Expr.Binary ast, Ast.Expr.Binary expected) {
         test(ast, expected, new Scope(null));
     }

@@ -75,7 +75,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Literal ast) { // TODO                   PASSED: LITERAL
+    public Void visit(Ast.Expr.Literal ast) { // TODO                                                   PASSED: Literal
 
         //Nil, Bool, Char, String
         if(ast.getLiteral() == null){
@@ -126,7 +126,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Binary ast) { // TODO                PASSED: Binary
+    public Void visit(Ast.Expr.Binary ast) { // TODO                                                    PASSED: Binary
         visit(ast.getLeft());
         visit(ast.getRight());
 
@@ -192,8 +192,23 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Access ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Expr.Access ast) { // TODO
+        //Has a receiver
+        if(ast.getReceiver().isPresent()){
+            System.out.println(ast.getReceiver().get());
+            visit(ast.getReceiver().get());
+            System.out.println(ast.getReceiver().get());
+            Environment.Variable var = scope.lookupVariable(ast.getName());
+            ast.setVariable(var);
+        }
+
+        //Doesn't have a receiver
+        else{
+            Environment.Variable temp = scope.lookupVariable(ast.getName());
+            ast.setVariable(temp);
+        }
+
+        return null;
     }
 
     @Override
@@ -201,10 +216,21 @@ public final class Analyzer implements Ast.Visitor<Void> {
         throw new UnsupportedOperationException();  // TODO
     }
 
-    public static void requireAssignable(Environment.Type target, Environment.Type type) { // TODO
-        if(!type.getName().equals(target.getName())){throw new RuntimeException("Wrong type");}
+    public static void requireAssignable(Environment.Type target, Environment.Type type) { // TODO      PASSED: requireAssignable
+        System.out.println("Target: " + target);
+        System.out.println("Type: " + type);
+        if (!target.getName().equals("Comparable") && !target.getName().equals("Any")) {
+            if (!type.getName().equals(target.getName())) {
+                throw new RuntimeException("Wrong type");
+            }
+        }
+        else if (target.getName().equals("Comparable")) {
+            if(!type.getName().equals("Integer") && !type.getName().equals("Decimal") && !type.getName().equals("Character") && !type.getName().equals("String")){
+                throw new RuntimeException("Wrong type");
+            }
+        }
+        //Original: if(!type.getName().equals(target.getName())){throw new RuntimeException("Wrong type");}
     }
-
     //enum Type {Boolean, Integer, Decimal, Character, String}
 
     public static int compareType (Environment.Type left, Environment.Type right){
