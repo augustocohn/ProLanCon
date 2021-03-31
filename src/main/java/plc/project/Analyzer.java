@@ -37,21 +37,28 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) { // TODO
+        //Get list of return type strings and convert to corresponding Environment.Type
         List<Environment.Type> paramType = new ArrayList<Environment.Type>();
-
         for(String str : ast.getParameterTypeNames()){
             paramType.add(Environment.getType(str));
         }
 
+        //Save expected return type to be checked with visit(Ast.Stmt.Return)
         Environment.Type returnType = Environment.getType(ast.getReturnTypeName().get());   //Look-back on; office hours
-
 
         scope.defineFunction(ast.getName(), ast.getName(), paramType, returnType, args -> Environment.NIL);
 
         scope = new Scope(scope);
 
-        for(Ast.Stmt stmt : ast.getStatements()){   //Need to check for return (LOOK at hint); Instanceof Return?
+        for(Ast.Stmt stmt : ast.getStatements()){
             visit(stmt);
+            //Checks to see if visited statement was a return
+            if(stmt instanceof Ast.Stmt.Return){
+                //If the visited statement doesn't match expected, throw error
+                if(!((Ast.Stmt.Return) stmt).getValue().getType().equals(returnType)){
+                    throw new RuntimeException("Return types doesn't match");
+                }
+            }
         }
 
         scope = scope.getParent();
@@ -61,15 +68,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Expression ast) { // TODO
-        //
+        //Expression cannot be instance of Expr.Function
         if(!(ast.getExpression() instanceof Ast.Expr.Function)){
             throw new RuntimeException("Invalid Expression");
         }
 
-        //
-        else{
-            visit(ast.getExpression());
-        }
+        //Expression can be visited
+        visit(ast.getExpression());
 
         return null;
     }
@@ -87,7 +92,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Stmt.If ast) { // TODO            DONE??? 3 SHOULDn't pass
+    public Void visit(Ast.Stmt.If ast) { // TODO            DONE??? 3 SHOULDN'T pass
         visit(ast.getCondition());
 
         //Condition is not of Type Boolean OR if there are no Then Statement
@@ -97,12 +102,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         //Condition is of Type Boolean
         else{
+            //Visit then statements
             scope = new Scope(scope);
             for(Ast.Stmt stmt : ast.getThenStatements()){
                 visit(stmt);
             }
             scope = scope.getParent();
 
+            //Visit else statements
             scope = new Scope(scope);
             for(Ast.Stmt stmt : ast.getElseStatements()){
                 visit(stmt);
@@ -138,12 +145,12 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.While ast) { // TODO    DONE?
         visit(ast.getCondition());
-        //
+        //Condition isn't boolean or doesn't contain statements
         if(!ast.getCondition().getType().getName().equals("Boolean")){
             throw new RuntimeException("Invalid While statement");
         }
 
-        //
+        //While is properly defined
         else{
             scope = new Scope(scope);
 
@@ -159,8 +166,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Return ast) { // TODO
-
-
+        visit(ast.getValue());
         return null;
     }
 
@@ -206,10 +212,12 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Group ast) { // TODO
+        //If expression isn't binary
         if(!(ast.getExpression() instanceof Ast.Expr.Binary)){
             throw new RuntimeException("Not a Binary expression");
         }
 
+        //Proper grouping
         visit(ast.getExpression());
 
         return null;
@@ -217,10 +225,12 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Binary ast) { // TODO                                                    PASSED: Binary
+        //Recursively visit left and right statements
         visit(ast.getLeft());
         visit(ast.getRight());
 
         switch(ast.getOperator()){
+            //L & R must be boolean for AND/OR
             case "AND":
             case "OR":
                 if(!(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 0)){
@@ -231,6 +241,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 }
                 break;
 
+            //L & R cannot be boolean or different types
             case "<":
             case "<=":
             case ">":
@@ -263,6 +274,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 }
                 break;
 
+            //Numerical arithmetic
             case "-":
             case "*":
             case "/":
@@ -282,7 +294,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Access ast) { // TODO
+    public Void visit(Ast.Expr.Access ast) { // TODO          CAN'T FIGURE THIS ONE OUT
         //Has a receiver
         if(ast.getReceiver().isPresent()){
             System.out.println(ast.getReceiver().get());
