@@ -26,8 +26,33 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Source ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Source ast) { // TODO
+        //Check for main
+        boolean checkMain = false;
+
+        //Visit fields
+        for(Ast.Field field : ast.getFields()){
+            visit(field);
+        }
+
+        //Visit methods
+        for(Ast.Method method : ast.getMethods()){
+            visit(method);
+            //If method name = main
+            if(method.getName().equals("main")){
+                //check for arity = 0 and returnType = Integer
+                if(method.getParameters().isEmpty() && (method.getReturnTypeName().isPresent() && method.getReturnTypeName().get().equals("Integer"))){
+                    checkMain = true;
+                }
+            }
+        }
+
+        //Check for name = main, arity = 0, returnType = Integer
+        if(!checkMain) {
+            throw new RuntimeException("No main/0/Integer");
+        }
+
+        return null;
     }
 
     @Override
@@ -58,7 +83,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
         }
 
         //Save expected return type to be checked with visit(Ast.Stmt.Return)
-        Environment.Type returnType = Environment.getType(ast.getReturnTypeName().get());   //Look-back on; office hours
+        Environment.Type returnType;
+        //If return type is present, save
+        if(ast.getReturnTypeName().isPresent()) {
+            returnType = Environment.getType(ast.getReturnTypeName().get());
+        //If not, return type is NIL (jvmName: Void)
+        } else {
+            returnType = Environment.Type.NIL;
+        }
 
         scope.defineFunction(ast.getName(), ast.getName(), paramType, returnType, args -> Environment.NIL);
 
