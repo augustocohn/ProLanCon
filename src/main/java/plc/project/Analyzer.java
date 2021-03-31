@@ -31,8 +31,22 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Field ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Field ast) { // TODO
+        //Convert string type to Environment.Type
+        Environment.Type type = Environment.getType(ast.getTypeName());
+
+        //Ensure that type == expected type and visit if true
+        if(ast.getValue().isPresent()) {
+            if(!type.equals(ast.getValue().get().getType())){
+                throw new RuntimeException("Assignment Types don't match");
+            }
+            visit(ast.getValue().get());
+        }
+
+        //Define variable in the current scope
+        scope.defineVariable(ast.getName(), ast.getName(), type, Environment.NIL);
+
+        return null;
     }
 
     @Override
