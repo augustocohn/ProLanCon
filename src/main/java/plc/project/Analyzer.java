@@ -2,6 +2,7 @@ package plc.project;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,18 +36,49 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Method ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Method ast) { // TODO
+        List<Environment.Type> paramType = new ArrayList<Environment.Type>();
+
+        for(String str : ast.getParameterTypeNames()){
+            paramType.add(Environment.getType(str));
+        }
+
+        Environment.Type returnType = Environment.getType(ast.getReturnTypeName().get());   //Look-back on; office hours
+
+
+        scope.defineFunction(ast.getName(), ast.getName(), paramType, returnType, args -> Environment.NIL);
+
+        scope = new Scope(scope);
+
+        for(Ast.Stmt stmt : ast.getStatements()){   //Need to check for return (LOOK at hint); Instanceof Return?
+            visit(stmt);
+        }
+
+        scope = scope.getParent();
+
+        return null;
     }
 
     @Override
-    public Void visit(Ast.Stmt.Expression ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Stmt.Expression ast) { // TODO
+        //
+        if(!(ast.getExpression() instanceof Ast.Expr.Function)){
+            throw new RuntimeException("Invalid Expression");
+        }
+
+        //
+        else{
+            visit(ast.getExpression());
+        }
+
+        return null;
     }
 
     @Override
-    public Void visit(Ast.Stmt.Declaration ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Stmt.Declaration ast) { // TODO
+
+
+        return null;
     }
 
     @Override
@@ -55,23 +87,81 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Stmt.If ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Stmt.If ast) { // TODO            DONE??? 3 SHOULDn't pass
+        visit(ast.getCondition());
+
+        //Condition is not of Type Boolean OR if there are no Then Statement
+        if(!ast.getCondition().getType().getName().equals("Boolean") || ast.getThenStatements().isEmpty()){
+            throw new RuntimeException("Not valid If statement");
+        }
+
+        //Condition is of Type Boolean
+        else{
+            scope = new Scope(scope);
+            for(Ast.Stmt stmt : ast.getThenStatements()){
+                visit(stmt);
+            }
+            scope = scope.getParent();
+
+            scope = new Scope(scope);
+            for(Ast.Stmt stmt : ast.getElseStatements()){
+                visit(stmt);
+            }
+            scope = scope.getParent();
+        }
+
+        return null;
     }
 
     @Override
-    public Void visit(Ast.Stmt.For ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Stmt.For ast) { // TODO    Done???
+        //
+        if(!ast.getValue().getType().getName().equals("IntegerIterable") || ast.getStatements().isEmpty()){
+            throw new RuntimeException("Invalid For statement");
+        }
+
+        //
+        else{
+            scope = new Scope(scope);
+
+            scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
+            for(Ast.Stmt stmt : ast.getStatements()){
+                visit(stmt);
+            }
+
+            scope = scope.getParent();
+        }
+
+        return null;
     }
 
     @Override
-    public Void visit(Ast.Stmt.While ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Stmt.While ast) { // TODO    DONE?
+        visit(ast.getCondition());
+        //
+        if(!ast.getCondition().getType().getName().equals("Boolean")){
+            throw new RuntimeException("Invalid While statement");
+        }
+
+        //
+        else{
+            scope = new Scope(scope);
+
+            for(Ast.Stmt stmt : ast.getStatements()){
+                visit(stmt);
+            }
+
+            scope = scope.getParent();
+        }
+
+        return null;
     }
 
     @Override
-    public Void visit(Ast.Stmt.Return ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Stmt.Return ast) { // TODO
+
+
+        return null;
     }
 
     @Override

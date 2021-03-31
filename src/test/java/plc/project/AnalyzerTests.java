@@ -127,6 +127,23 @@ public final class AnalyzerTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    public void testForStatement(String test, Ast.Stmt.For ast, Ast.Stmt.For expected) {
+        test(ast, expected, new Scope(null));
+    }
+
+    public static Stream<Arguments> testForStatement() {
+        return Stream.of(
+                Arguments.of("test",
+                        new Ast.Stmt.For("num",
+                                new Ast.Expr.Literal(Boolean.TRUE), Arrays.asList()
+                        ),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     public void testLiteralExpression(String test, Ast.Expr.Literal ast, Ast.Expr.Literal expected) {
         test(ast, expected, new Scope(null));
     }
