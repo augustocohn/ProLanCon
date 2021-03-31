@@ -62,9 +62,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         //Ensure that type == expected type and visit if true
         if(ast.getValue().isPresent()) {
-            if(!type.equals(ast.getValue().get().getType())){
-                throw new RuntimeException("Assignment Types don't match");
-            }
+            //if(!type.equals(ast.getValue().get().getType())){
+              //  throw new RuntimeException("Assignment Types don't match");
+            //}
+            requireAssignable(type, ast.getValue().get().getType());
             visit(ast.getValue().get());
         }
 
@@ -113,7 +114,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Stmt.Expression ast) { // TODO
+    public Void visit(Ast.Stmt.Expression ast) { // TODO     SOMETHING WRONG WITH IF CHECK
         //Expression cannot be instance of Expr.Function
         if(!(ast.getExpression() instanceof Ast.Expr.Function)){
             throw new RuntimeException("Invalid Expression");
@@ -127,7 +128,31 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Declaration ast) { // TODO
+        Environment.Type type;
+        //If type exists
+        if(ast.getTypeName().isPresent()){
+            //Store type
+            type = Environment.getType(ast.getTypeName().get());
+            //Check if value type is equal to expected type
+            if(ast.getValue().isPresent()){
+                visit(ast.getValue().get());
+                //if(!type.equals(ast.getValue().get().getType())){
+                  //  throw new RuntimeException("Types don't match");
+                //}
+                requireAssignable(type, ast.getValue().get().getType());
+            }
+        //Type isn't present but value is
+        } else if(ast.getValue().isPresent()){
+            //Visit and set type equal to value type
+            visit(ast.getValue().get());
+            type = ast.getValue().get().getType();
+        //If both aren't present throw error
+        } else {
+            throw new RuntimeException("Invalid declaration");
+        }
 
+        //Define variable
+        scope.defineVariable(ast.getName(), ast.getName(), type, Environment.NIL);
 
         return null;
     }
@@ -365,8 +390,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) { // TODO      PASSED: requireAssignable
-        System.out.println("Target: " + target);
-        System.out.println("Type: " + type);
+        //System.out.println("Target: " + target);
+        //System.out.println("Type: " + type);
         if (!target.getName().equals("Comparable") && !target.getName().equals("Any")) {
             if (!type.getName().equals(target.getName())) {
                 throw new RuntimeException("Wrong type");
