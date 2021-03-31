@@ -59,19 +59,28 @@ public final class Parser {
      */
     public Ast.Field parseField() throws ParseException { //TODO
         /** 'LET' identifier ('=' expression)? ';' */
+        /** Updated: 'LET' identifier ':' identifier ('=' expression)? ';'*/
         if(match("LET")){
             if(peek(Token.Type.IDENTIFIER)){
                 String name = tokens.get(0).getLiteral();
                 match(Token.Type.IDENTIFIER);
-                if(match(";")){                                                         /**Handles just instantiation*/
-                    return new Ast.Field(name, Optional.empty());
-                }
 
-                if(match("=")){
-                    Ast.Expr expression = parseExpression();
+                if(match(":")){
+                    if(peek(Token.Type.IDENTIFIER)){
+                        String type = tokens.get(0).getLiteral();
+                        match(Token.Type.IDENTIFIER);
 
-                    if(match(";")){
-                        return new Ast.Field(name, Optional.of(expression));
+                        if(match("=")){
+                            Ast.Expr expression = parseExpression();
+
+                            if(match(";")){
+                                return new Ast.Field(name, type, Optional.of(expression));
+                            }
+                        }
+
+                        else if(match(";")){
+                            return new Ast.Field(name, type, Optional.empty());
+                        }
                     }
                 }
             }
@@ -86,48 +95,27 @@ public final class Parser {
      */
     public Ast.Method parseMethod() throws ParseException { //TODO
         /** 'DEF' identifier '(' (identifier (',' identifier)*)? ')' 'DO' statement* 'END' */
+        /** Updated: 'DEF' identifier '(' (identifier ':' identifier (',' identifier ':' identifier)* )? ')' (':' identifier)? 'DO' statement* 'END' */
         if(match("DEF")){
             if(peek(Token.Type.IDENTIFIER)) {
                 String name = tokens.get(0).getLiteral();
                 match(Token.Type.IDENTIFIER);
                 if(match("(")){
                     List<String> parameters = new ArrayList<String>();
+                    List<String> paramTypes = new ArrayList<String>();
                     List<Ast.Stmt> statements = new ArrayList<Ast.Stmt>();
 
+                    //No Parameters
                     if(match(")")){                                                     /**Handles 0 parameters*/
-                        if(match("DO")){
-                            if(match("END")){                                           /**Handles 0 Do statements*/
-                                return new Ast.Method(name, parameters, statements);
-                            }
+                        //Has a Return Type
+                        if(match(":")){
+                            String type = tokens.get(0).getLiteral();
+                            match(Token.Type.IDENTIFIER);
 
-                            while(!peek("END")){
-                                Ast.Stmt temp = parseStatement();
-                                statements.add(temp);
-                            }
-
-                            if(match("END")){
-                                return new Ast.Method(name, parameters, statements);
-                            }
-                        }
-                        else{
-                            throw new ParseException("Missing Do statement", tokens.get(0).getIndex());
-                        }
-                    }
-
-                    if(peek(Token.Type.IDENTIFIER)){
-                        String argument = tokens.get(0).getLiteral();
-                        parameters.add(argument);
-                        match(Token.Type.IDENTIFIER);
-
-                        while(match(",")){
-                            argument = tokens.get(0).getLiteral();
-                            parameters.add(argument);
-                        }
-
-                        if(match(")")){
                             if(match("DO")){
+                                //No Statements
                                 if(match("END")){                                           /**Handles 0 Do statements*/
-                                    return new Ast.Method(name, parameters, statements);
+                                    return new Ast.Method(name, parameters, paramTypes, Optional.of(type), statements);
                                 }
 
                                 while(!peek("END")){
@@ -136,12 +124,88 @@ public final class Parser {
                                 }
 
                                 if(match("END")){
-                                    return new Ast.Method(name, parameters, statements);
+                                    return new Ast.Method(name, parameters, paramTypes, Optional.of(type), statements);
                                 }
                             }
-                            else{
-                                throw new ParseException("Missing Do statement", tokens.index + 1);
+                        }
+
+                        //No Return Type
+                        if(match("DO")){
+                            if(match("END")){
+                                return new Ast.Method(name, parameters, paramTypes, Optional.empty(), statements);
                             }
+
+                            while(!peek("END")){
+                                Ast.Stmt temp = parseStatement();
+                                statements.add(temp);
+                            }
+
+                            if(match("END")){
+                                return new Ast.Method(name, parameters, paramTypes, Optional.empty(), statements);
+                            }
+                        }
+                        else{
+                            throw new ParseException("Missing Do statement", tokens.get(0).getIndex());
+                        }
+                    }
+
+                    //Has Parameters
+                    if(peek(Token.Type.IDENTIFIER)){
+                        String argument = tokens.get(0).getLiteral();
+                        String type = "";
+                        parameters.add(argument);
+                        match(Token.Type.IDENTIFIER);
+
+                        while(match(",")){
+                            argument = tokens.get(0).getLiteral();
+                            match(Token.Type.IDENTIFIER);
+                            match(":");
+                            type = tokens.get(0).getLiteral();
+                            match(Token.Type.IDENTIFIER);
+
+                            parameters.add(argument);
+                            paramTypes.add(type);
+                        }
+
+                        //Has a Return Type
+                        if(match(":")){
+                            type = tokens.get(0).getLiteral();
+                            match(Token.Type.IDENTIFIER);
+
+                            if(match("DO")){
+                                //No Statements
+                                if(match("END")){
+                                    return new Ast.Method(name, parameters, paramTypes, Optional.of(type), statements);
+                                }
+
+                                while(!peek("END")){
+                                    Ast.Stmt temp = parseStatement();
+                                    statements.add(temp);
+                                }
+
+                                if(match("END")){
+                                    return new Ast.Method(name, parameters, paramTypes, Optional.of(type), statements);
+                                }
+                            }
+                        }
+
+                        //No Return Type
+                        if(match("DO")){
+                            if(match("END")){
+                                return new Ast.Method(name, parameters, paramTypes, Optional.empty(), statements);
+                            }
+
+                            while(!peek("END")){
+                                Ast.Stmt temp = parseStatement();
+                                statements.add(temp);
+                            }
+
+                            if(match("END")){
+                                return new Ast.Method(name, parameters, paramTypes, Optional.empty(), statements);
+                            }
+                        }
+                        else{
+                            throw new ParseException("Missing Do statement", tokens.get(0).getIndex());
                         }
                     }
                 }
@@ -198,15 +262,34 @@ public final class Parser {
      */
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException { //TODO      PASSED: Declaration
         /** 'LET' identifier ('=' expression)? ';' */
+        /** Updated: 'LET' identifier (':' identifier)? ('=' expression)? ';' */
         if(match("LET")) {
             String name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
-            if (match("=")) {
-                Ast.Expr right = parseExpression();                                         //Is there a difference b/w Ast.Expr and Ast.Stmt.Expr***
+
+            if(match(":")){                                                     /**-----Definition (Has a Type)-----*/
+                String type = tokens.get(0).getLiteral();
+                match(Token.Type.IDENTIFIER);
+                if (match("=")) {
+                    Ast.Expr right = parseExpression();
+                    if (match(";")) {
+                        return new Ast.Stmt.Declaration(name, Optional.of(type), Optional.of(right));
+
+                    }
+                }
+                else if (match(";")) {
+                    return new Ast.Stmt.Declaration(name, Optional.of(type), Optional.empty());
+                }
+            }
+
+            else if (match("=")) {                                              /**-----Initialization (No Type)-----*/
+                Ast.Expr right = parseExpression();
                 if (match(";")) {
                     return new Ast.Stmt.Declaration(name, Optional.of(right));
                 }
             }
+
+            //Identifier only
             else if (match(";")) {
                 return new Ast.Stmt.Declaration(name, Optional.empty());
             }
@@ -235,7 +318,7 @@ public final class Parser {
                 while(!peek("ELSE") || !peek("END")){
                     Ast.Stmt temp = parseStatement();
                     thenStatements.add(temp);
-                    if(peek("ELSE") || peek("END")){break;}                 /**Handles issue w/ while loop condition*/
+                    if(peek("ELSE") || peek("END")){break;}                /**Handles issue w/ while loop condition*/
                 }
 
                 if (match("ELSE")) {
@@ -279,10 +362,10 @@ public final class Parser {
             if(match("IN")){
                 Ast.Expr expression = parseExpression();
                 if(match("DO")){
-                    if(match("END")){                                           /**Handles 0 Do statements*/
+                    if(match("END")){                                           /**No Do statements*/
                         return new Ast.Stmt.For(name, expression, stmtList);
                     }
-                    else {                                                               /**Handles 1+ Do statements*/
+                    else {                                                               /**1+ Do statements*/
                         while(!peek("END")){
                             Ast.Stmt temp = parseStatement();
                             stmtList.add(temp);
@@ -314,10 +397,10 @@ public final class Parser {
             List<Ast.Stmt> stmtList = new ArrayList<Ast.Stmt>();
 
             if(match("DO")){
-                if(match("END")){                                               /**Handles 0 Do statements*/
+                if (match("END")) {                                                 /**No Do statements*/
                     return new Ast.Stmt.While(expression, stmtList);
                 }
-                else{                                                                    /**Handles 1+ Do statements*/
+                else{                                                                        /**1+ Do statements*/
                     while(!peek("END")){
                         Ast.Stmt temp = parseStatement();
                         stmtList.add(temp);
@@ -443,8 +526,8 @@ public final class Parser {
          *              )?
          *      ')' )?
          * )*
-        *
-        * */
+         **/
+
         while (match(".")){
             if(peek(Token.Type.IDENTIFIER)) {
                 String name = tokens.get(0).getLiteral();
