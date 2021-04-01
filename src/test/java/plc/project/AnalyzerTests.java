@@ -187,7 +187,6 @@ public final class AnalyzerTests {
                                 new Environment.Variable("variable", "Integer", Environment.Type.INTEGER, Environment.create(0)))
                         )
                 ),
-
                 Arguments.of("Field",
                         new Ast.Expr.Access(Optional.of(new Ast.Expr.Access(Optional.empty(), "object")), "field"),
                         init(new Ast.Expr.Access(Optional.of(new Ast.Expr.Access(Optional.empty(), "object")), "field"), ast -> ast.setVariable

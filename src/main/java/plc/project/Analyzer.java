@@ -384,13 +384,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Expr.Access ast) { // TODO          CAN'T FIGURE THIS ONE OUT
         //Has a receiver
         if(ast.getReceiver().isPresent()){
-            System.out.println(ast.getReceiver().get());
             visit(ast.getReceiver().get());
-            System.out.println(ast.getReceiver().get());
-            Environment.Variable var = scope.lookupVariable(ast.getName());
-            ast.setVariable(var);
         }
-
         //Doesn't have a receiver
         else{
             Environment.Variable temp = scope.lookupVariable(ast.getName());
@@ -401,8 +396,23 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Expr.Function ast) { // TODO    CAN'T FIGURE THIS ONE OUT
+        //Has a receiver
+        if(ast.getReceiver().isPresent()){
+            visit(ast.getReceiver().get());
+        }
+        //Doesn't have a receiver
+        else{
+            Environment.Function temp = scope.lookupFunction(ast.getName(), ast.getArguments().size());
+            ast.setFunction(temp);
+        }
+
+        //Checks the args are assignable to the parameter types
+        for(int i = 0; i < ast.getArguments().size(); i++){
+            requireAssignable(ast.getFunction().getParameterTypes().get(i), ast.getArguments().get(i).getType());
+        }
+
+        return null;
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) { // TODO      PASSED: requireAssignable

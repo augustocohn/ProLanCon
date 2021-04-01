@@ -1,9 +1,9 @@
 plc/project/LexerTests.java
  plc.project.LexerTests
-plc/homework/RegexTests.java
- plc.homework.RegexTests
 plc/project/ParserTests.java
  plc.project.ParserTests
+plc/homework/RegexTests.java
+ plc.homework.RegexTests
 plc/project/InterpreterTests.java
  plc.project.InterpreterTests
 plc/project/AnalyzerTests.java
