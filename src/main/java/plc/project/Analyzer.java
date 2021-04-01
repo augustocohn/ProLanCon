@@ -63,7 +63,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         //Ensure that type == expected type and visit if true
         if(ast.getValue().isPresent()) {
             //if(!type.equals(ast.getValue().get().getType())){
-              //  throw new RuntimeException("Assignment Types don't match");
+            //  throw new RuntimeException("Assignment Types don't match");
             //}
             requireAssignable(type, ast.getValue().get().getType());
             visit(ast.getValue().get());
@@ -88,7 +88,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         //If return type is present, save
         if(ast.getReturnTypeName().isPresent()) {
             returnType = Environment.getType(ast.getReturnTypeName().get());
-        //If not, return type is NIL (jvmName: Void)
+            //If not, return type is NIL (jvmName: Void)
         } else {
             returnType = Environment.Type.NIL;
         }
@@ -137,16 +137,16 @@ public final class Analyzer implements Ast.Visitor<Void> {
             if(ast.getValue().isPresent()){
                 visit(ast.getValue().get());
                 //if(!type.equals(ast.getValue().get().getType())){
-                  //  throw new RuntimeException("Types don't match");
+                //  throw new RuntimeException("Types don't match");
                 //}
                 requireAssignable(type, ast.getValue().get().getType());
             }
-        //Type isn't present but value is
+            //Type isn't present but value is
         } else if(ast.getValue().isPresent()){
             //Visit and set type equal to value type
             visit(ast.getValue().get());
             type = ast.getValue().get().getType();
-        //If both aren't present throw error
+            //If both aren't present throw error
         } else {
             throw new RuntimeException("Invalid declaration");
         }
@@ -384,13 +384,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Expr.Access ast) { // TODO          CAN'T FIGURE THIS ONE OUT
         //Has a receiver
         if(ast.getReceiver().isPresent()){
-            System.out.println(ast.getReceiver().get());
             visit(ast.getReceiver().get());
-            System.out.println(ast.getReceiver().get());
-            Environment.Variable var = scope.lookupVariable(ast.getName());
-            ast.setVariable(var);
         }
-
         //Doesn't have a receiver
         else{
             Environment.Variable temp = scope.lookupVariable(ast.getName());
@@ -401,8 +396,23 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+    public Void visit(Ast.Expr.Function ast) { // TODO    CAN'T FIGURE THIS ONE OUT
+        //Has a receiver
+        if(ast.getReceiver().isPresent()){
+            visit(ast.getReceiver().get());
+        }
+        //Doesn't have a receiver
+        else{
+            Environment.Function temp = scope.lookupFunction(ast.getName(), ast.getArguments().size());
+            ast.setFunction(temp);
+        }
+
+        //Checks the args are assignable to the parameter types
+        for(int i = 0; i < ast.getArguments().size(); i++){
+            requireAssignable(ast.getFunction().getParameterTypes().get(i), ast.getArguments().get(i).getType());
+        }
+
+        return null;
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) { // TODO      PASSED: requireAssignable
