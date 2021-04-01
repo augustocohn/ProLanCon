@@ -11,6 +11,13 @@ import java.util.stream.Collectors;
  * See the specification for information about what the different visit
  * methods should do.
  */
+
+/**
+ *
+ * Check visit(ast.getReceiver()) for Assignment - NOT SURE IF NEEDED
+ *
+ */
+
 public final class Analyzer implements Ast.Visitor<Void> {
 
     public Scope scope;
@@ -114,7 +121,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Stmt.Expression ast) { // TODO     SOMETHING WRONG WITH IF CHECK
+    public Void visit(Ast.Stmt.Expression ast) { // TODO
         //Expression cannot be instance of Expr.Function
         if(!(ast.getExpression() instanceof Ast.Expr.Function)){
             throw new RuntimeException("Invalid Expression");
@@ -166,6 +173,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         //Type Analysis on value
         visit(ast.getValue());
+
         //NOT SURE VISIT RECEIVER - MUST FINISH ACCESS
         visit(ast.getReceiver());
 
@@ -186,6 +194,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if(!ast.getCondition().getType().getName().equals("Boolean") || ast.getThenStatements().isEmpty()){
             throw new RuntimeException("Not valid If statement");
         }
+        //MIGHT WANT TO USE requireAssignable
+        //requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
 
         //Condition is of Type Boolean
         else{
@@ -208,16 +218,19 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Stmt.For ast) { // TODO    Done???
-        //
+    public Void visit(Ast.Stmt.For ast) { // TODO
+        //Checks for valid type
         if(!ast.getValue().getType().getName().equals("IntegerIterable") || ast.getStatements().isEmpty()){
             throw new RuntimeException("Invalid For statement");
         }
+        //MIGHT WANT TO USE requireAssignable
+        //requireAssignable(Environment.Type.INTEGER_ITERABLE, ast.getValue().getType());
 
-        //
+        //Preforms for loop
         else{
             scope = new Scope(scope);
 
+            //Defines for each variable
             scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
             for(Ast.Stmt stmt : ast.getStatements()){
                 visit(stmt);
@@ -249,6 +262,23 @@ public final class Analyzer implements Ast.Visitor<Void> {
         }
 
         return null;
+
+        //LECTURE IMPLEMENTATION
+        /*
+        visit(ast.getCondition());
+        requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
+        Try{
+            scope = new Scope(scope);
+            For(Ast.Stmt stmt : ast.getStatements()){
+                visit(stmt);
+            }
+        }
+        Finally{
+            scope = scope.getParent();
+        }
+        return null;
+    }
+        */
     }
 
     @Override
@@ -381,12 +411,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Access ast) { // TODO          CAN'T FIGURE THIS ONE OUT
+    public Void visit(Ast.Expr.Access ast) { // TODO          OFFICE HOURS SOLUTION
         //Has a receiver
         if(ast.getReceiver().isPresent()){
-            visit(ast.getReceiver().get());
+            Ast.Expr temp = new Ast.Expr.Access(ast.getReceiver(), ast.getName());
+            ast.setVariable(temp.getType().getField(ast.getName()));
         }
-        //Doesn't have a receiver
+        //Doesn't have receiver
         else{
             Environment.Variable temp = scope.lookupVariable(ast.getName());
             ast.setVariable(temp);
@@ -396,10 +427,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
-    public Void visit(Ast.Expr.Function ast) { // TODO    CAN'T FIGURE THIS ONE OUT
+    public Void visit(Ast.Expr.Function ast) { // TODO    TWO DIFFERENT SOLUTIONS - NOT SURE WHICH IS CORRECT
         //Has a receiver
         if(ast.getReceiver().isPresent()){
-            visit(ast.getReceiver().get());
+            //Ast.Expr temp = new Ast.Expr.Access(ast.getReceiver(), ast.getName());
+            //ast.setFunction(temp.getType().getMethod(ast.getName(), ast.getArguments().size()));
+            Ast.Expr temp = new Ast.Expr.Function(ast.getReceiver(), ast.getName(), ast.getArguments());
+            ast.setFunction(temp.getType().getMethod(ast.getName(), ast.getArguments().size()));
         }
         //Doesn't have a receiver
         else{
@@ -408,6 +442,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         }
 
         //Checks the args are assignable to the parameter types
+        //MIGHT NEED TWEAKING
         for(int i = 0; i < ast.getArguments().size(); i++){
             requireAssignable(ast.getFunction().getParameterTypes().get(i), ast.getArguments().get(i).getType());
         }
