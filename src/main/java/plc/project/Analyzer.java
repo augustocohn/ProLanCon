@@ -442,6 +442,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         //Checks the args are assignable to the parameter types
         //MIGHT NEED TWEAKING
         for(int i = 0; i < ast.getArguments().size(); i++){
+            visit(ast.getArguments().get(i));
             requireAssignable(ast.getFunction().getParameterTypes().get(i), ast.getArguments().get(i).getType());
         }
 
