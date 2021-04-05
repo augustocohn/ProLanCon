@@ -69,15 +69,16 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         //Ensure that type == expected type and visit if true
         if(ast.getValue().isPresent()) {
-            //if(!type.equals(ast.getValue().get().getType())){
-            //  throw new RuntimeException("Assignment Types don't match");
-            //}
-            requireAssignable(type, ast.getValue().get().getType());
+            //visit to assign type to it
             visit(ast.getValue().get());
+            //check to ensure type matches expected type
+            requireAssignable(type, ast.getValue().get().getType());
         }
 
         //Define variable in the current scope
         scope.defineVariable(ast.getName(), ast.getName(), type, Environment.NIL);
+        //Sets it in the ast
+        ast.setVariable(scope.lookupVariable(ast.getName()));
 
         return null;
     }
@@ -226,17 +227,17 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.For ast) { // TODO
         //Checks for valid type
-        if(!ast.getValue().getType().getName().equals("IntegerIterable") || ast.getStatements().isEmpty()){
+        requireAssignable(Environment.Type.INTEGER_ITERABLE, ast.getValue().getType());
+        //checks for empty body
+        if(ast.getStatements().isEmpty()){
             throw new RuntimeException("Invalid For statement");
         }
-        //MIGHT WANT TO USE requireAssignable
-        //requireAssignable(Environment.Type.INTEGER_ITERABLE, ast.getValue().getType());
 
         //Preforms for loop
         else{
             scope = new Scope(scope);
 
-            //Defines for each variable
+            //Defines the for each variable
             scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
             for(Ast.Stmt stmt : ast.getStatements()){
                 visit(stmt);
