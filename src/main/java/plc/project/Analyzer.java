@@ -414,8 +414,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Expr.Access ast) { // TODO          OFFICE HOURS SOLUTION
         //Has a receiver
         if(ast.getReceiver().isPresent()){
-            Ast.Expr temp = new Ast.Expr.Access(ast.getReceiver(), ast.getName());
-            ast.setVariable(temp.getType().getField(ast.getName()));
+            visit(ast.getReceiver().get());
+            ast.setVariable(ast.getReceiver().get().getType().getField(ast.getName()));
         }
         //Doesn't have receiver
         else{
@@ -430,10 +430,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Expr.Function ast) { // TODO    TWO DIFFERENT SOLUTIONS - NOT SURE WHICH IS CORRECT
         //Has a receiver
         if(ast.getReceiver().isPresent()){
-            //Ast.Expr temp = new Ast.Expr.Access(ast.getReceiver(), ast.getName());
-            //ast.setFunction(temp.getType().getMethod(ast.getName(), ast.getArguments().size()));
-            Ast.Expr temp = new Ast.Expr.Function(ast.getReceiver(), ast.getName(), ast.getArguments());
-            ast.setFunction(temp.getType().getMethod(ast.getName(), ast.getArguments().size()));
+            visit(ast.getReceiver().get());
+            ast.setFunction(ast.getReceiver().get().getType().getMethod(ast.getName(), ast.getArguments().size()));
         }
         //Doesn't have a receiver
         else{
