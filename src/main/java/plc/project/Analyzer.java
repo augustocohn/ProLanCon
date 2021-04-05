@@ -164,6 +164,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         //Define variable
         scope.defineVariable(ast.getName(), ast.getName(), type, Environment.NIL);
+        //Apply variable to ast
+        ast.setVariable(scope.lookupVariable(ast.getName()));
 
         return null;
     }
