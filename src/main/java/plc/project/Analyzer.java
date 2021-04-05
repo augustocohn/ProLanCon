@@ -100,6 +100,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             returnType = Environment.Type.NIL;
         }
 
+        //defines a function in the current scope
         scope.defineFunction(ast.getName(), ast.getName(), paramType, returnType, args -> Environment.NIL);
 
         scope = new Scope(scope);
@@ -116,6 +117,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
         }
 
         scope = scope.getParent();
+
+        //Sets function in the ast after statements have been visited and return type established
+        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getParameters().size()));
 
         return null;
     }
@@ -442,7 +446,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
         //Checks the args are assignable to the parameter types
         //MIGHT NEED TWEAKING
         for(int i = 0; i < ast.getArguments().size(); i++){
+            //visit arguments to apply type
             visit(ast.getArguments().get(i));
+            //make sure arguments are right type as specified by definition
             requireAssignable(ast.getFunction().getParameterTypes().get(i), ast.getArguments().get(i).getType());
         }
 
