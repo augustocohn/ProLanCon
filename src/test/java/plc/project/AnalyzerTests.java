@@ -307,6 +307,32 @@ public final class AnalyzerTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    public void testGroupExpression(String test, Ast.Expr.Group ast, Ast.Expr.Group expected){
+        test(ast, expected, new Scope(null));
+    }
+
+    private static Stream<Arguments> testGroupExpression(){
+        return Stream.of(
+                Arguments.of("Grouped Binary",
+                        new Ast.Expr.Group(
+                                new Ast.Expr.Binary("+",
+                                        new Ast.Expr.Literal(BigInteger.ONE),
+                                        new Ast.Expr.Literal(BigInteger.TEN)
+                                )
+                        ),
+                        init(new Ast.Expr.Group(
+                                init(new Ast.Expr.Binary("+",
+                                        init(new Ast.Expr.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                                        init(new Ast.Expr.Literal(BigInteger.TEN), ast -> ast.setType(Environment.Type.INTEGER))
+                                ), ast -> ast.setType(Environment.Type.INTEGER))
+                                ), ast -> ast.setType(Environment.Type.INTEGER)
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     public void testAccessExpression(String test, Ast.Expr.Access ast, Ast.Expr.Access expected) {
         test(ast, expected, init(new Scope(null), scope -> {
             scope.defineVariable("variable", "variable", Environment.Type.INTEGER, Environment.NIL);

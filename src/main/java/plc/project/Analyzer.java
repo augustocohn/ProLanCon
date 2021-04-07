@@ -342,7 +342,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
         }
 
         //Proper grouping
+        //Set the type of the internal expression
         visit(ast.getExpression());
+        //Must set same type for the entire grouped expression
+        ast.setType(ast.getExpression().getType());
 
         return null;
     }
@@ -385,7 +388,6 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 if(ast.getLeft().getType().getName().equals("String") || ast.getRight().getType().getName().equals("String")){
                     ast.setType(Environment.Type.STRING);
                 }
-
                 //Number Addition
                 else if(compareType(ast.getLeft().getType(), ast.getRight().getType()) == 1){
                     ast.setType(Environment.Type.INTEGER);
