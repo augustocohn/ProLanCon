@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -151,6 +152,47 @@ public final class AnalyzerTests {
                 )
         );
     }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testForStatement(String test, Ast.Stmt.For ast, Ast.Stmt.For expected) {
+        test(ast, expected, init(new Scope(null), scope -> {
+            scope.defineVariable("list", "list", Environment.Type.INTEGER_ITERABLE, Environment.NIL);
+        }));
+    }
+
+    private static Stream<Arguments> testForStatement(){
+        return Stream.of(
+                //FOR num IN list DO print(num); END
+                Arguments.of("Valid Loop",
+                        new Ast.Stmt.For("num",
+                                new Ast.Expr.Access(Optional.empty(), "list"),
+                                Arrays.asList(new Ast.Stmt.Expression(
+                                        new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                                new Ast.Expr.Access(Optional.empty(), "num")
+                                        ))
+                                ))
+                        ),
+                        new Ast.Stmt.For("num",
+                                init(new Ast.Expr.Access(Optional.empty(), "list"), ast -> ast.setVariable(new Environment.Variable("list", "list", Environment.Type.INTEGER_ITERABLE, Environment.NIL))),
+                                Arrays.asList(new Ast.Stmt.Expression(
+                                        init(new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                                init(new Ast.Expr.Access(Optional.empty(), "num"), ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, Environment.NIL)))
+                                        )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                ))
+                        )
+                ),
+                Arguments.of("Empty Statements",
+                        new Ast.Stmt.For("num",
+                                new Ast.Expr.Access(Optional.empty(), "list"),
+                                Arrays.asList()
+                        ),
+                        null
+                )
+
+        );
+    }
+
 
     @ParameterizedTest(name = "{0}")
     @MethodSource

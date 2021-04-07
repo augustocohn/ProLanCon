@@ -226,7 +226,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.For ast) { // TODO
-        //Checks for valid type
+        //Visits value to assign type to it
+        visit(ast.getValue());
+        //Checks that the type is right
         requireAssignable(Environment.Type.INTEGER_ITERABLE, ast.getValue().getType());
         //checks for empty body
         if(ast.getStatements().isEmpty()){
