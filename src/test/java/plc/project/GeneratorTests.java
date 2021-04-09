@@ -126,6 +126,57 @@ public class GeneratorTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    void testLiteralExpression(String test, Ast.Expr.Literal ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testLiteralExpression() {
+        return Stream.of(
+                Arguments.of("Boolean",
+                        init(new Ast.Expr.Literal(true), ast -> ast.setType(Environment.Type.BOOLEAN)),
+                        "true"
+                ),
+                Arguments.of("Integer",
+                        init(new Ast.Expr.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                        "1"
+                ),
+                Arguments.of("Decimal",
+                        init(new Ast.Expr.Literal(new BigDecimal(10.25)), ast -> ast.setType(Environment.Type.DECIMAL)),
+                        "10.25"
+                ),
+                Arguments.of("Character",
+                        init(new Ast.Expr.Literal('c'), ast -> ast.setType(Environment.Type.CHARACTER)),
+                        "\'c\'"
+                ),
+                Arguments.of("String",
+                        init(new Ast.Expr.Literal("Gus is a bobo"), ast -> ast.setType(Environment.Type.STRING)),
+                        "\"Gus is a bobo\""
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testGroupExpression(String test, Ast.Expr.Group ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testGroupExpression() {
+        return Stream.of(
+                Arguments.of("Binary",
+                        init(new Ast.Expr.Group(
+                                init(new Ast.Expr.Binary("+",
+                                        init(new Ast.Expr.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                                        init(new Ast.Expr.Literal(BigInteger.TEN), ast -> ast.setType(Environment.Type.INTEGER))
+                                ), ast -> ast.setType(Environment.Type.INTEGER))
+                        ), ast -> ast.setType(Environment.Type.INTEGER)),
+                        "(1 + 10)"
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     void testBinaryExpression(String test, Ast.Expr.Binary ast, String expected) {
         test(ast, expected);
     }
@@ -150,6 +201,25 @@ public class GeneratorTests {
                 )
         );
     }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testAccessExpression(String test, Ast.Expr.Access ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testAccessExpression() {
+        return Stream.of(
+                Arguments.of("Field",
+                        init(new Ast.Expr.Access(Optional.of(
+                                init(new Ast.Expr.Access(Optional.empty(), "object"), ast -> ast.setVariable(new Environment.Variable("object", "object", Environment.Type.ANY, Environment.NIL)))
+                        ), "field"), ast -> ast.setVariable(new Environment.Variable("field", "field", Environment.Type.INTEGER, Environment.NIL))),
+                        "object.field"
+                )
+        );
+    }
+
+
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
