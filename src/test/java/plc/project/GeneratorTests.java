@@ -58,6 +58,58 @@ public class GeneratorTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    void testField(String test, Ast.Field ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testField() {
+        return Stream.of(
+                Arguments.of("Declaration",
+                        init(new Ast.Field("name", "Integer",
+                                Optional.empty()), ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, Environment.NIL))),
+                        "int name;"),
+
+                Arguments.of("Initialization",
+                        init(new Ast.Field("name", "Decimal",
+                                Optional.of(init(new Ast.Expr.Literal(new BigDecimal("1.0")), ast -> ast.setType(Environment.Type.DECIMAL)))),
+                                ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.DECIMAL, Environment.NIL))),
+                        "double name = 1.0;")
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testMethod(String test, Ast.Method ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testMethod() {
+        return Stream.of(
+                Arguments.of("Valid",
+                        init(new Ast.Method("func", Arrays.asList("x","y","z"), Arrays.asList("Integer","Decimal","String"), Optional.empty(), Arrays.asList(
+                                new Ast.Stmt.Expression(init(new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expr.Access(Optional.empty(), "x"), ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, Environment.NIL)))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))),
+                                new Ast.Stmt.Expression(init(new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expr.Access(Optional.empty(), "y"), ast -> ast.setVariable(new Environment.Variable("y", "y", Environment.Type.DECIMAL, Environment.NIL)))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))),
+                                new Ast.Stmt.Expression(init(new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expr.Access(Optional.empty(), "z"), ast -> ast.setVariable(new Environment.Variable("z", "z", Environment.Type.STRING, Environment.NIL)))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))))
+                        )), ast -> ast.setFunction(new Environment.Function("func", "func", Arrays.asList(Environment.Type.INTEGER, Environment.Type.DECIMAL, Environment.Type.STRING), Environment.Type.NIL, args -> Environment.NIL))),
+                        String.join(System.lineSeparator(),
+                                "Void func(int x, double y, String z) {",
+                                "    System.out.println(x);",
+                                "    System.out.println(y);",
+                                "    System.out.println(z);",
+                                "}"
+                        )
+                        )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     void testDeclarationStatement(String test, Ast.Stmt.Declaration ast, String expected) {
         test(ast, expected);
     }
@@ -118,6 +170,32 @@ public class GeneratorTests {
                                 "    stmt1;",
                                 "} else {",
                                 "    stmt2;",
+                                "}"
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testForStatement(String test, Ast.Stmt.For ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testForStatement() {
+        return Stream.of(
+                Arguments.of("Valid",
+                        new Ast.Stmt.For("num",
+                                init(new Ast.Expr.Access(Optional.empty(), "list"), ast -> ast.setVariable(new Environment.Variable("list", "list", Environment.Type.INTEGER_ITERABLE, Environment.NIL))),
+                                Arrays.asList(new Ast.Stmt.Expression(
+                                        init(new Ast.Expr.Function(Optional.empty(), "print", Arrays.asList(
+                                                init(new Ast.Expr.Access(Optional.empty(), "num"), ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, Environment.NIL)))
+                                        )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                ))
+                        ),
+                        String.join(System.lineSeparator(),
+                                "for (int num : list) {",
+                                "    System.out.println(num);",
                                 "}"
                         )
                 )
