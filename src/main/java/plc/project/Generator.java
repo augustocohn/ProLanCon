@@ -35,8 +35,14 @@ public final class Generator implements Ast.Visitor<Void> {
         newline(++indent);
 
         //Fields
-        for(Ast.Field field : ast.getFields()){
-            visit(field);
+        for(int i = 0; i < ast.getFields().size(); i++){
+            visit(ast.getFields().get(i));
+            if(i != ast.getFields().size()-1){
+                newline(indent);
+            }else{
+                newline(--indent);
+                newline(++indent);
+            }
         }
 
         print("public static void main(String[] args) {");
@@ -49,12 +55,17 @@ public final class Generator implements Ast.Visitor<Void> {
         newline(++indent);
 
         //Methods
-        for(Ast.Method method : ast.getMethods()){
-            visit(method);
+        for(int i = 0; i < ast.getMethods().size(); i++){
+            visit(ast.getMethods().get(i));
+            if(i != ast.getMethods().size()-1) {
+                newline(--indent);
+                newline(++indent);
+            }else{
+                newline(--indent);
+                newline(indent);
+            }
         }
 
-        newline(--indent);
-        newline(indent);
         print("}");
 
         return null;
@@ -97,10 +108,14 @@ public final class Generator implements Ast.Visitor<Void> {
                 print(ast.getStatements().get(i));
             }
 
-            newline(--indent);
-
-            print("}");
         }
+
+        if(!ast.getStatements().isEmpty()) {
+            newline(--indent);
+        }else{
+            newline(indent);
+        }
+        print("}");
 
         return null;
     }
