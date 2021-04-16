@@ -56,11 +56,15 @@ public final class Generator implements Ast.Visitor<Void> {
 
         //Methods
         for(int i = 0; i < ast.getMethods().size(); i++){
+            boolean check = ast.getMethods().get(i).getStatements().isEmpty();
             visit(ast.getMethods().get(i));
-            if(i != ast.getMethods().size()-1) {
+            if(i != ast.getMethods().size()-1 && !check) {
                 newline(--indent);
                 newline(++indent);
-            }else{
+            } else if(i != ast.getMethods().size()-1 && check){
+                newline(--indent);
+                newline(++indent);
+            } else{
                 newline(--indent);
                 newline(indent);
             }
@@ -112,8 +116,6 @@ public final class Generator implements Ast.Visitor<Void> {
 
         if(!ast.getStatements().isEmpty()) {
             newline(--indent);
-        }else{
-            newline(indent);
         }
         print("}");
 
